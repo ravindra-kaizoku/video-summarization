@@ -1,0 +1,39 @@
+system:
+  min_video_duration_minutes: 30
+  chunk_duration_seconds: 180      # 3 minutes — finer segmentation for better coverage
+  frame_interval_seconds: 15        # sample 1 frame every 15 seconds
+  device: "cpu"                      # auto, cuda, cpu
+  cache_dir: "cache"
+
+audio:
+  whisper_model: "tiny"              # tiny, base, small, medium, large-v3
+  whisper_device: "cpu"
+  compute_type: "int8"               # int8, float32, float16
+  language: "en"
+
+visual:
+  feature_dim: 512
+  extractor: "resnet18"              # resnet18, clip, mobilenet
+  max_frames_per_chunk: 20
+
+model:
+  text_embed_dim: 384               # sentence-transformers/all-MiniLM-L6-v2
+  visual_embed_dim: 512
+  fused_dim: 256
+  hidden_dim: 128
+  num_layers: 2
+  dropout: 0.2
+  importance_threshold: 0.5          # Top fraction/score threshold for selecting key segments
+  top_k_chunks: 15                   # Up to 15 sections for long videos; coverage logic trims intelligently
+
+llm:
+  provider: "mock_api"               # mock_api, openai, groq, gemini
+  api_key: ""
+  model_name: "gpt-3.5-turbo"
+  temperature: 0.3
+  max_tokens: 1000
+
+paths:
+  model_save_path: "models/video_importance_model.pt"
+  summe_dir: "datasets/summe"
+  tvsum_dir: "datasets/tvsum"

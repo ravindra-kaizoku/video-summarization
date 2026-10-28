@@ -1,0 +1,42 @@
+
+uploads/*
+!uploads/.gitkeep
+
+datasets/*
+!datasets/.gitkeep
+
+node_modules/
+dist/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+*.log
+
+# Generated cache and extracted features
+cache/
+
+# Uploaded videos
+uploads/*
+!uploads/.gitkeep
+
+# Datasets
+datasets/*
+!datasets/.gitkeep
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment secrets
+.env
+.env.*
+cache/
