@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: video-summarizer-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.11
+      - key: HF_HUB_OFFLINE
+        value: "0"

@@ -8,24 +8,29 @@ class VisualFeatureExtractor:
     def __init__(self, feature_dim: int = 512, device: str = "cpu"):
         self.device = device
         self.feature_dim = feature_dim
-        
-        # Load a lightweight pretrained model (ResNet-18) and strip off the final classification layer
-        resnet = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-        resnet.fc = torch.nn.Identity()  # Outputs 512-dim embedding
-        resnet.to(self.device)
-        resnet.eval()
-        self.model = resnet
+        self.model = None
+        self.transform = None
 
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225]
-            )
-        ])
+    def _init_model(self):
+        if self.model is None:
+            # Load a lightweight pretrained model (ResNet-18) lazily on first inference
+            resnet = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+            resnet.fc = torch.nn.Identity()  # Outputs 512-dim embedding
+            resnet.to(self.device)
+            resnet.eval()
+            self.model = resnet
+
+            self.transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]
+                )
+            ])
 
     def extract_features(self, image_path_or_pil) -> np.ndarray:
+        self._init_model()
         if isinstance(image_path_or_pil, str):
             image = Image.open(image_path_or_pil).convert("RGB")
         else:

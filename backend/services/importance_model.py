@@ -10,10 +10,12 @@ class VideoImportanceService:
     def __init__(self, model_path: str = "models/video_importance_model.pt", device: str = "cpu"):
         self.device = device
         self.model_path = model_path
-        self.text_embedder = SentenceTransformer("all-MiniLM-L6-v2", device=device)
+        self.text_embedder = None
         self.model = None
 
     def _init_model(self):
+        if self.text_embedder is None:
+            self.text_embedder = SentenceTransformer("all-MiniLM-L6-v2", device=self.device)
         if self.model is None:
             if not os.path.exists(self.model_path):
                 print(f"[MODEL] Warning: checkpoint '{self.model_path}' not found. Using untrained weights.")

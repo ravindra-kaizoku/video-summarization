@@ -8,11 +8,20 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import yt_dlp
 
-from backend.services.pipeline import VideoSummarizationPipeline
 from backend.utils.ffmpeg_utils import get_ffmpeg_cmd
 
 router = APIRouter()
-pipeline = VideoSummarizationPipeline()
+
+_pipeline = None
+
+def get_pipeline():
+    """Lazily load the deep learning pipeline on first request to conserve memory on startup."""
+    global _pipeline
+    if _pipeline is None:
+        print("[BACKEND] Initializing VideoSummarizationPipeline lazily...")
+        from backend.services.pipeline import VideoSummarizationPipeline
+        _pipeline = VideoSummarizationPipeline()
+    return _pipeline
 
 tasks_db = {}
 results_db = {}
@@ -182,7 +191,8 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
                 tasks_db[task_id]["duration"] = info.get("duration")
             print(f"[4] Video download completed. Saved to: {file_path}")
 
-        result = pipeline.process_long_video(file_path, progress_callback=progress_callback)
+        pipeline_instance = get_pipeline()
+        result = pipeline_instance.process_long_video(file_path, progress_callback=progress_callback)
         result["video_url"] = tasks_db[task_id]["video_url"]
         if video_title:
             result["title"] = video_title
