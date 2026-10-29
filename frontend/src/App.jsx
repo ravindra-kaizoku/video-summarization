@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import './App.css';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const BACKEND_URL = (import.meta.env.VITE_API_URL || 'https://video-summarization-jwsl.onrender.com').replace(/\/+$/, '');
+const API_BASE_URL = `${BACKEND_URL}/api`;
 
 const YoutubeIcon = ({ size = 22, color = "#ef4444" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -166,7 +167,7 @@ function App() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setTaskId(resp.data.task_id);
-      setVideoUrl(`http://localhost:8000${resp.data.video_url}`);
+      setVideoUrl(`${BACKEND_URL}${resp.data.video_url}`);
       setStatus('uploaded');
       setProgress(100);
       setStatusMessage('Video uploaded successfully. Ready to summarize.');
@@ -248,7 +249,7 @@ function App() {
           setStatusMessage(resp.data.message || 'Processing video...');
           
           if (resp.data.video_url && !videoUrl) {
-            setVideoUrl(`http://localhost:8000${resp.data.video_url}`);
+            setVideoUrl(`${BACKEND_URL}${resp.data.video_url}`);
           }
           if (resp.data.youtube_id && !youtubeId) {
             setYoutubeId(resp.data.youtube_id);
@@ -260,7 +261,7 @@ function App() {
             const resResp = await axios.get(`${API_BASE_URL}/result/${taskId}`);
             setResult(resResp.data);
             if (resResp.data.video_url) {
-              setVideoUrl(`http://localhost:8000${resResp.data.video_url}`);
+              setVideoUrl(`${BACKEND_URL}${resResp.data.video_url}`);
             }
           } else if (resp.data.status === 'failed') {
             setIsProcessing(false);

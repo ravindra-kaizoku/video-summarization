@@ -1,0 +1,267 @@
+{
+  "total_parameters": 1004801,
+  "trainable_parameters": 1004801,
+  "model_size_mb": 3.83,
+  "architecture": {
+    "visual_projection": "Linear(512\u2192128) + BN + ReLU + Dropout(0.2)",
+    "text_projection": "Linear(384\u2192128) + BN + ReLU + Dropout(0.2)",
+    "fusion": "Concatenation(128+128=256) + Linear(256\u2192256) + ReLU + Dropout(0.2)",
+    "temporal_encoder": "BiLSTM(input=256, hidden=128, layers=2, bidirectional=True)",
+    "classifier": "Linear(256\u2192128) + ReLU + Dropout(0.2) + Linear(128\u21921) + Sigmoid"
+  },
+  "layer_details": [
+    {
+      "name": "text_proj.0.weight",
+      "shape": [
+        128,
+        384
+      ],
+      "params": 49152,
+      "trainable": true
+    },
+    {
+      "name": "text_proj.0.bias",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "text_proj.1.weight",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "text_proj.1.bias",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "visual_proj.0.weight",
+      "shape": [
+        128,
+        512
+      ],
+      "params": 65536,
+      "trainable": true
+    },
+    {
+      "name": "visual_proj.0.bias",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "visual_proj.1.weight",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "visual_proj.1.bias",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "fusion_fc.0.weight",
+      "shape": [
+        256,
+        256
+      ],
+      "params": 65536,
+      "trainable": true
+    },
+    {
+      "name": "fusion_fc.0.bias",
+      "shape": [
+        256
+      ],
+      "params": 256,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_ih_l0",
+      "shape": [
+        512,
+        256
+      ],
+      "params": 131072,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_hh_l0",
+      "shape": [
+        512,
+        128
+      ],
+      "params": 65536,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_ih_l0",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_hh_l0",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_ih_l0_reverse",
+      "shape": [
+        512,
+        256
+      ],
+      "params": 131072,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_hh_l0_reverse",
+      "shape": [
+        512,
+        128
+      ],
+      "params": 65536,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_ih_l0_reverse",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_hh_l0_reverse",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_ih_l1",
+      "shape": [
+        512,
+        256
+      ],
+      "params": 131072,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_hh_l1",
+      "shape": [
+        512,
+        128
+      ],
+      "params": 65536,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_ih_l1",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_hh_l1",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_ih_l1_reverse",
+      "shape": [
+        512,
+        256
+      ],
+      "params": 131072,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.weight_hh_l1_reverse",
+      "shape": [
+        512,
+        128
+      ],
+      "params": 65536,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_ih_l1_reverse",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "bilstm.bias_hh_l1_reverse",
+      "shape": [
+        512
+      ],
+      "params": 512,
+      "trainable": true
+    },
+    {
+      "name": "classifier.0.weight",
+      "shape": [
+        128,
+        256
+      ],
+      "params": 32768,
+      "trainable": true
+    },
+    {
+      "name": "classifier.0.bias",
+      "shape": [
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "classifier.3.weight",
+      "shape": [
+        1,
+        128
+      ],
+      "params": 128,
+      "trainable": true
+    },
+    {
+      "name": "classifier.3.bias",
+      "shape": [
+        1
+      ],
+      "params": 1,
+      "trainable": true
+    }
+  ]
+}

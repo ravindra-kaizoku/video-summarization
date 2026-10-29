@@ -1,4 +1,3 @@
-
 uploads/*
 !uploads/.gitkeep
 
@@ -13,30 +12,16 @@ __pycache__/
 *.pyc
 .env
 .env.*
+!.env.example
+!frontend/.env.example
 *.log
 
 # Generated cache and extracted features
 cache/
-
-# Uploaded videos
-uploads/*
-!uploads/.gitkeep
-
-# Datasets
-datasets/*
-!datasets/.gitkeep
 
 # Frontend dependencies and build output
 frontend/node_modules/
 frontend/dist/
 
 # Python cache and virtual environments
-__pycache__/
 *.py[cod]
-.venv/
-venv/
-
-# Environment secrets
-.env
-.env.*
-cache/

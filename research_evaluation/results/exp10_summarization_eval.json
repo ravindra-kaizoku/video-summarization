@@ -1,0 +1,31 @@
+{
+  "model_name": "t5-small",
+  "sample_evaluations": [
+    {
+      "chunk_id": 1,
+      "input_words": 34,
+      "output_words": 9,
+      "compression_ratio": 0.735,
+      "generation_time_sec": 1.02,
+      "generated_summary": "The architecture allows hierarchical feature extraction from low-level edges."
+    },
+    {
+      "chunk_id": 2,
+      "input_words": 30,
+      "output_words": 19,
+      "compression_ratio": 0.367,
+      "generation_time_sec": 0.867,
+      "generated_summary": "We cover database indexing and query optimization. B-trees provide logarithmic search guarantees, while hash index offers constant-time point lookups."
+    },
+    {
+      "chunk_id": 3,
+      "input_words": 30,
+      "output_words": 23,
+      "compression_ratio": 0.233,
+      "generation_time_sec": 0.53,
+      "generated_summary": "The experimental results demonstrate that our proposed multimodal fusion model reduces mean squared error significantly while maintaining high temporal coverage across 45-minute videos."
+    }
+  ],
+  "mean_generation_time_sec": 0.805,
+  "mean_compression_ratio": 0.445
+}

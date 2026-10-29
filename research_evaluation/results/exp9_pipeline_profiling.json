@@ -1,0 +1,71 @@
+[
+  {
+    "video_name": "test_video_30min",
+    "duration_minutes": 30.0,
+    "duration_seconds": 1800.0,
+    "resolution": "640x360",
+    "total_frames_extracted": 120,
+    "transcript_segments": 21,
+    "total_chunks": 10,
+    "selected_chunks": 10,
+    "stage_latency_seconds": {
+      "metadata_extraction": 0.02,
+      "stt_loading": 0.0004,
+      "visual_feature_loading": 0.0208,
+      "temporal_alignment": 0.0026,
+      "importance_scoring_and_selection": 0.3386,
+      "t5_summarization": 11.369
+    },
+    "total_latency_seconds": 11.7513,
+    "real_time_factor": 0.006529,
+    "summary_word_count": 20,
+    "key_points_count": 4,
+    "sample_summary": "Sexy etymphony's tv series dubbed the olympics of america vs. Discussion and key presentation events occurring between 06:00 and 09:00...."
+  },
+  {
+    "video_name": "diagnostic_test_001",
+    "duration_minutes": 0.32,
+    "duration_seconds": 18.93,
+    "resolution": "320x240",
+    "total_frames_extracted": 2,
+    "transcript_segments": 2,
+    "total_chunks": 1,
+    "selected_chunks": 1,
+    "stage_latency_seconds": {
+      "metadata_extraction": 0.0088,
+      "stt_loading": 0.0004,
+      "visual_feature_loading": 0.0009,
+      "temporal_alignment": 0.0002,
+      "importance_scoring_and_selection": 0.016,
+      "t5_summarization": 1.2959
+    },
+    "total_latency_seconds": 1.3221,
+    "real_time_factor": 0.06984,
+    "summary_word_count": 34,
+    "key_points_count": 3,
+    "sample_summary": "Elephant elephant's cool thing is that they have long prompts and that is cool. Elephant elephant has a very long response time and is very quick to respond if you want to eat it...."
+  },
+  {
+    "video_name": "e8b793cf-28a5-4eb1-a6b6-d2e4eb75e9c4",
+    "duration_minutes": 15.75,
+    "duration_seconds": 944.78,
+    "resolution": "1920x1080",
+    "total_frames_extracted": 64,
+    "transcript_segments": 280,
+    "total_chunks": 6,
+    "selected_chunks": 6,
+    "stage_latency_seconds": {
+      "metadata_extraction": 0.0255,
+      "stt_loading": 0.0008,
+      "visual_feature_loading": 0.0112,
+      "temporal_alignment": 0.0017,
+      "importance_scoring_and_selection": 0.1964,
+      "t5_summarization": 8.4048
+    },
+    "total_latency_seconds": 8.6404,
+    "real_time_factor": 0.009145,
+    "summary_word_count": 68,
+    "key_points_count": 6,
+    "sample_summary": "Ol' mccartney taylor is based at the crest of the border. It's pathetic, isn't it? I give up the only job I ever loved to do this. I beg him, my crocks. The ab workout is specifically designed to stre..."
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "experiment_timestamp": "2026-10-29 16:44:38",
+  "total_time_seconds": 2.7,
+  "experiments_run": [
+    "exp1",
+    "exp2",
+    "exp3",
+    "exp4",
+    "exp5",
+    "exp6",
+    "exp7",
+    "exp8"
+  ]
+}
