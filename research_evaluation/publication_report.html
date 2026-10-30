@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>A Multimodal Framework for Long-Format Video Summarization - Research Evaluation Report</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 18mm 14mm 20mm 14mm;
+    @bottom-center {
+      content: counter(page);
+      font-size: 9pt;
+      font-family: 'Times New Roman', Times, serif;
+      color: #666;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: 'Times New Roman', Times, Georgia, serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #111;
+    background: #fff;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* HEADER & METADATA */
+  .ieee-header {
+    text-align: center;
+    border-bottom: 2px solid #222;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .paper-title {
+    font-size: 19pt;
+    font-weight: bold;
+    line-height: 1.25;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #0b1a30;
+  }
+
+  .paper-subtitle {
+    font-size: 11pt;
+    font-style: italic;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .author-meta {
+    font-size: 9pt;
+    color: #444;
+    margin-bottom: 6px;
+  }
+
+  .doc-badge-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    font-size: 8.5pt;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #2b4c7e;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+
+  /* SECTIONS */
+  .section-title {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #0d233a;
+    border-bottom: 1px solid #0d233a;
+    padding-bottom: 3px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+
+  .subsection-title {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10.5pt;
+    font-weight: bold;
+    color: #1a365d;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  p {
+    margin: 0 0 8px 0;
+    text-align: justify;
+  }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8.5pt;
+    background: #f0f3f8;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #d4dce8;
+  }
+
+  /* TABLES */
+  .table-container {
+    margin: 12px 0 16px 0;
+    page-break-inside: avoid;
+    width: 100%;
+  }
+
+  .table-caption {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 9pt;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    color: #1a202c;
+  }
+
+  table.ieee-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    line-height: 1.35;
+    margin: 0 auto;
+    border-top: 2px solid #111;
+    border-bottom: 2px solid #111;
+  }
+
+  table.ieee-table th {
+    border-top: 1px solid #111;
+    border-bottom: 1px solid #111;
+    padding: 6px 7px;
+    text-align: left;
+    background-color: #f7fafc;
+    font-weight: bold;
+    color: #0f172a;
+  }
+
+  table.ieee-table td {
+    padding: 5px 7px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  table.ieee-table tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  /* FIGURES */
+  .figure-card {
+    margin: 14px 0 18px 0;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #ffffff;
+    page-break-inside: avoid;
+    text-align: center;
+  }
+
+  .figure-img-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background: #ffffff;
+    padding: 4px;
+  }
+
+  .vector-figure {
+    max-width: 100%;
+    max-height: 290px;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .figure-caption {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 8pt;
+    line-height: 1.3;
+    color: #334155;
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px solid #e2e8f0;
+    text-align: justify;
+  }
+
+  /* CALLOUTS & BLOCKQUOTES */
+  .ieee-quote {
+    margin: 10px 0;
+    padding: 8px 12px;
+    background: #f1f5f9;
+    border-left: 3px solid #2563eb;
+    font-size: 9pt;
+    font-style: italic;
+    color: #1e293b;
+    page-break-inside: avoid;
+  }
+
+  .equation {
+    text-align: center;
+    font-family: 'Times New Roman', serif;
+    font-size: 10.5pt;
+    margin: 8px 0;
+    padding: 4px;
+    background: #fdfdfe;
+  }
+
+  ul, ol {
+    margin: 4px 0 10px 20px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 4px;
+    text-align: justify;
+  }
+</style>
+</head>
+<body>
+
+<div class="ieee-header">
+  <div class="paper-title">A Multimodal Framework for Long-Format Video Summarization</div>
+  <div class="paper-subtitle">Visual Saliency Estimation via Bidirectional LSTM Feature Fusion and Hierarchical Language Model Synthesis</div>
+  <div class="author-meta">
+    <strong>Senior Machine Learning & Computer Vision Research Team</strong> &bull; Advanced AI Systems &bull; IEEE Empirical Evaluation Report
+  </div>
+  <div class="doc-badge-row">
+    <span>Date: October 2026</span>
+    <span>&bull;</span>
+    <span>Benchmark: SumMe & TVSum</span>
+    <span>&bull;</span>
+    <span>Hardware: AMD Ryzen 5 CPU Execution</span>
+    <span>&bull;</span>
+    <span>Status: Complete Empirical Audit</span>
+  </div>
+</div>
+
+<div class="content">
+<h1 class="paper-title">Experimental Results and Empirical Evaluation Report</h1>
+<h2 class="section-title">A Multimodal Framework for Long-Format Video Summarization Using Visual Importance Estimation and Large Language Models</h2>
+
+<strong>Document Type:</strong> IEEE-Style Results, Discussion, and Validation Section  
+<strong>Lead Evaluator:</strong> Senior Machine Learning & Computer Vision Research Specialist  
+<strong>Evaluation Date:</strong> October 29, 2026  
+<strong>Artifact Directory:</strong> <code>research_evaluation/</code>  
+<strong>Dataset Audit:</strong> [<code>dataset_audit.csv</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/dataset_audit.csv) | [<code>dataset_summary.md</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/dataset_summary.md)  
+<strong>Experimental Figures:</strong> [<code>figures/</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/figures/)  
+<strong>Raw JSON Metrics:</strong> [<code>results/</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/results/)
+
+---
+
+<h2 class="section-title">1. Executive Summary</h2>
+
+This report delivers a rigorous, empirical evaluation of the existing video summarization system for publication in an IEEE-style peer-reviewed venue. Rather than assuming the architecture conformed to proposed research concepts, an exhaustive code and checkpoint audit was conducted, missing experimental harnesses were developed, and eight reproducible experiments were executed on CPU hardware.
+
+<h3 class="subsection-title">Key Empirical Findings:</h3>
+1. <strong>Architectural Divergence:</strong> The operational pipeline does <em>not</em> employ GoogLeNet, VASNet, Kernel Temporal Segmentation (KTS), Qwen2.5-0.5B-Instruct, or SmolVLM-256M. Instead, it implements a <strong>custom 2-layer Bidirectional LSTM (BiLSTM) fusion model (1.005M parameters)</strong> with <strong>ResNet-18 (512-dim visual features)</strong>, <strong>SentenceTransformers <code>all-MiniLM-L6-v2</code> (384-dim text features)</strong>, <strong>fixed 180-second chunking</strong>, and <strong>T5-small (60M parameters)</strong> for transcript summarization.
+2. <strong>Multimodality Boundary:</strong> The framework is multimodal <em>only</em> during segment importance scoring. Final abstractive text generation is strictly unimodal—T5-small receives speech transcript tokens and receives zero visual features or visual tokens.
+3. <strong>Training Data Provenance:</strong> The 75 benchmark entries in <code>datasets/processed_dataset.json</code> were generated <strong>synthetically</strong> using normalized Gaussian random vectors with temporal bias heuristics. Neither raw SumMe/TVSum frames nor Apple's LVSum dataset were decoded during training.
+4. <strong>Predictive Performance on Test Data:</strong> On the held-out test split (12 videos, 249 temporal segments), Checkpoint B achieves an <strong>MSE of 0.0073</strong> and an apparent <strong>F1-score of 0.9939</strong> at threshold 0.5. However, linear correlation is near zero (<strong>Pearson <span class="inline-math"><em>r = -0.0506, p = 0.4264</em></span></strong>, <strong>Spearman <span class="inline-math"><em>\rho = -0.0551</em></span></strong>). This reveals that the low MSE is an artifact of narrow target clustering (mean 0.875, std 0.043), rather than meaningful saliency ranking.
+5. <strong>Ablation Findings:</strong> Ablation proves the multimodal architecture relies on feature co-presence. Zeroing out text degrades MSE by <span class="inline-math"><em>4.6\times</em></span> (0.0073 <span class="inline-math"><em>\rightarrow</em></span> 0.0335), zeroing out visual inputs degrades MSE by <span class="inline-math"><em>5.8\times</em></span> (0.0073 <span class="inline-math"><em>\rightarrow</em></span> 0.0423), and removing both causes catastrophic divergence (MSE 0.7588).
+6. <strong>Computational Efficiency:</strong> On an AMD Ryzen 5 5600H CPU, segment scoring requires just <strong>6.00 ms</strong> per sequence. The end-to-end pipeline processes a 30-minute video in <strong>11.75 seconds</strong> (Real-Time Factor, <span class="inline-math"><em>\text{RTF} = 0.0065</em></span>), demonstrating exceptional execution throughput for resource-constrained deployments.
+
+---
+
+<h2 class="section-title">2. Architecture and Implementation Audit</h2>
+
+A systematic comparison between the proposed methodology and the actual codebase is summarized in Table I.
+
+<div class="table-caption">TABLE I: Architectural Discrepancy Matrix</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Component</th>
+  <th>Proposed Methodology</th>
+  <th>Confirmed Code Implementation</th>
+  <th>Discrepancy Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Visual Feature Extractor</strong></td>
+  <td>GoogLeNet / Inception-v1 (1024-dim)</td>
+  <td>Pretrained ResNet-18 (512-dim embedding)</td>
+  <td><strong>High</strong> (Dimensionality & receptive field shift)</td>
+</tr>
+<tr>
+  <td><strong>Frame Sampling Rate</strong></td>
+  <td><i>\approx 2.0</i> frames per second (fps)</td>
+  <td>1 frame per 15.0 seconds (<i>\approx 0.067</i> fps in production)</td>
+  <td><strong>Critical</strong> (30× temporal undersampling)</td>
+</tr>
+<tr>
+  <td><strong>Importance Model</strong></td>
+  <td>VASNet (self-attention mechanism)</td>
+  <td>Multimodal BiLSTM Fusion Network (2 layers, hidden=128)</td>
+  <td><strong>Critical</strong> (Recurrent vs. transformer-attention)</td>
+</tr>
+<tr>
+  <td><strong>Temporal Segmentation</strong></td>
+  <td>Kernel Temporal Segmentation (KTS)</td>
+  <td>Fixed temporal windowing (180.0 seconds per chunk)</td>
+  <td><strong>High</strong> (No content-adaptive scene boundaries)</td>
+</tr>
+<tr>
+  <td><strong>Segment Selection</strong></td>
+  <td>0/1 Knapsack optimization</td>
+  <td>Coverage-aware windowed selection (<i>\le 15</i> chunks)</td>
+  <td><strong>Moderate</strong> (Heuristic vs. formal constraint)</td>
+</tr>
+<tr>
+  <td><strong>Speech Transcription</strong></td>
+  <td>Faster-Whisper</td>
+  <td>Faster-Whisper <code>tiny</code> (int8 quantized, CPU)</td>
+  <td><strong>Low</strong> (Matches intended model family)</td>
+</tr>
+<tr>
+  <td><strong>Text Summarization</strong></td>
+  <td>Qwen2.5-0.5B-Instruct</td>
+  <td>HuggingFace T5-small (60M parameters)</td>
+  <td><strong>High</strong> (Different model architecture & scale)</td>
+</tr>
+<tr>
+  <td><strong>Visual Captioning</strong></td>
+  <td>SmolVLM-256M-Instruct</td>
+  <td>Hardcoded string stub in <code>visual_features.py</code></td>
+  <td><strong>Critical</strong> (Feature omitted from execution)</td>
+</tr>
+<tr>
+  <td><strong>Final Multimodal Fusion</strong></td>
+  <td>Multimodal LLM integration</td>
+  <td>Transcript-only hierarchical aggregation via T5</td>
+  <td><strong>Critical</strong> (Visual data discarded prior to LLM)</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3 class="subsection-title">2.1 The Multimodal Boundary</h3>
+A primary claim in multimodal research is that visual and acoustic modalities jointly condition summary generation. Inspection of <code>backend/services/summarizer.py</code> (lines 49–96 and 109–158) confirms:
+- Chunks receive visual descriptions from <code>generate_visual_description()</code>, but this function returns a static string: <code>"Visual frame showing lecture slide or video scene activity."</code>
+- In <code>generate_chunk_summary()</code>, only <code>chunk.get("transcript", "")</code> is fed into T5-small.
+- In <code>generate_final_summary()</code>, the prompt combines previously generated textual chunk summaries.
+
+<strong>Formal Clarification for Publication:</strong> The framework is <em>multimodally conditioned at the selection stage</em> (visual features inform which temporal chunks are retained), but <em>unimodal at the abstractive generation stage</em> (the generative text model processes transcripts exclusively).
+
+---
+
+<h2 class="section-title">3. Dataset Audit and Verification</h2>
+
+<h3 class="subsection-title">3.1 Status of LVSum Benchmark</h3>
+The research plan specified fine-tuning VASNet on the LVSum dataset. An audit across all directories, configuration files, and git history confirms:
+- No LVSum video files, metadata annotations, or feature caches exist in the project repository.
+- <code>training/download_dataset.py</code> references a Kaggle dataset (<code>python16/summe-videos-and-tvsum-videos/versions/1</code>), not LVSum.
+
+<h3 class="subsection-title">3.2 Verification of Training Data (<code>datasets/processed_dataset.json</code>)</h3>
+The primary training dataset consists of 75 videos totaling 1,506 temporal segments. Statistical inspection confirms this data was generated synthetically by <code>training/preprocess.py</code>:
+- Features were generated using <code>np.random.randn(n, 512)</code> and <code>np.random.randn(n, 384)</code> with <span class="inline-math"><em>L_2</em></span> unit normalization.
+- Ground-truth importance scores were calculated from feature variance plus temporal bias:
+  <div class="equation"><em>\text{Score} = \text{clip}\left(0.30 + 0.35 \frac{\sigma_v}{\max(\sigma_v)} + 0.30 \frac{\sum |t_{:20}|}{\max(\sum |t_{:20}|)} + |\text{bias}| + \epsilon, 0.10, 0.95\right)</em></div>
+- Consequently, the ground-truth scores have an artificial mean of <strong>0.8750</strong> and standard deviation of <strong>0.0435</strong> (see [<code>dataset_audit.csv</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/dataset_audit.csv)).
+
+<h3 class="subsection-title">3.3 Partitioning Protocol and Data Leakage</h3>
+The data split in <code>datasets/data_split.json</code> establishes a strict video-level partition:
+- <strong>Training Set:</strong> 52 videos (1,018 segments, 67.6%)
+- <strong>Validation Set:</strong> 11 videos (239 segments, 15.9%)
+- <strong>Test Set:</strong> 12 videos (249 segments, 16.5%)
+- <strong>Partition Verification:</strong> <span class="inline-math"><em>\text{Train} \cap \text{Val} = \emptyset</em></span>, <span class="inline-math"><em>\text{Train} \cap \text{Test} = \emptyset</em></span>, <span class="inline-math"><em>\text{Val} \cap \text{Test} = \emptyset</em></span>. Segment-level leakage is zero.
+
+---
+
+<h2 class="section-title">4. Quantitative Results & Model Performance</h2>
+
+<h3 class="subsection-title">4.1 Evaluation Across Checkpoints</h3>
+Table II reports the performance of the two saved PyTorch checkpoints evaluated on the 12 held-out test videos (249 segments).
+
+<div class="table-caption">TABLE II: Test Set Evaluation Across Model Checkpoints</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Metric</th>
+  <th>Checkpoint A (<code>.pt</code>, Epoch 8)</th>
+  <th>Checkpoint B (<code>.pth</code>, Epoch 18)</th>
+  <th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Mean Squared Error (MSE)</strong></td>
+  <td><strong>0.002266</strong></td>
+  <td>0.007335</td>
+  <td>Very low loss due to target clustering</td>
+</tr>
+<tr>
+  <td><strong>Root Mean Squared Error (RMSE)</strong></td>
+  <td><strong>0.047607</strong></td>
+  <td>0.085646</td>
+  <td>Average deviation <i>\approx 0.05</i> to <i>0.08</i></td>
+</tr>
+<tr>
+  <td><strong>Mean Absolute Error (MAE)</strong></td>
+  <td><strong>0.038609</strong></td>
+  <td>0.050162</td>
+  <td>Low absolute error</td>
+</tr>
+<tr>
+  <td><strong>Pearson Correlation (<i>r</i>)</strong></td>
+  <td>-0.0581 (<i>p = 0.360</i>)</td>
+  <td><strong>-0.0506</strong> (<i>p = 0.426</i>)</td>
+  <td><strong>No linear correlation with annotations</strong></td>
+</tr>
+<tr>
+  <td><strong>Spearman Rank Correlation (<i>\rho</i>)</strong></td>
+  <td>-0.0432 (<i>p = 0.498</i>)</td>
+  <td><strong>-0.0551</strong> (<i>p = 0.386</i>)</td>
+  <td><strong>No monotonic ranking preservation</strong></td>
+</tr>
+<tr>
+  <td><strong>Kendall's Tau (<i>\tau</i>)</strong></td>
+  <td>-0.0295 (<i>p = 0.491</i>)</td>
+  <td><strong>-0.0378</strong> (<i>p = 0.380</i>)</td>
+  <td>Ranking concordance is random</td>
+</tr>
+<tr>
+  <td><strong>Binary F1-Score (<i>\theta = 0.5</i>)</strong></td>
+  <td><strong>1.0000</strong></td>
+  <td>0.9939</td>
+  <td>Misleadingly high due to score clustering</td>
+</tr>
+<tr>
+  <td><strong>Precision (<i>\theta = 0.5</i>)</strong></td>
+  <td>1.0000</td>
+  <td>1.0000</td>
+  <td>All positive predictions are above threshold</td>
+</tr>
+<tr>
+  <td><strong>Recall (<i>\theta = 0.5</i>)</strong></td>
+  <td>1.0000</td>
+  <td>0.9880</td>
+  <td>Targets are almost entirely <i>> 0.5</i></td>
+</tr>
+<tr>
+  <td><strong>Prediction Standard Deviation</strong></td>
+  <td>0.0168</td>
+  <td><strong>0.0712</strong></td>
+  <td>Checkpoint B exhibits <i>4.2\times</i> wider dynamic range</td>
+</tr>
+<tr>
+  <td><strong>Prediction Range <i>[\min, \max]</i></strong></td>
+  <td><i>[0.7964, 0.8906]</i></td>
+  <td><i>[0.2349, 0.9056]</i></td>
+  <td>Checkpoint B breaks flat prediction mode</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+        <div class="figure-card">
+          <div class="figure-img-wrap">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNDUwIiB3aWR0aD0iNTAwIiBoZWlnaHQ9IjQ1MCI+DQogIDxzdHlsZT4NCiAgICB0ZXh0IHsgZm9udC1mYW1pbHk6ICJUaW1lcyBOZXcgUm9tYW4iLCBUaW1lcywgc2VyaWY7IH0NCiAgICAudGl0bGUgeyBmb250LXNpemU6IDE1cHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBmaWxsOiAjMTExOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9DQogICAgLmF4aXMtbGFiZWwgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiBub3JtYWw7IGZpbGw6ICMyMjI7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0NCiAgICAudGljay1sYWJlbCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzQ0NDsgfQ0KICAgIC5sZWdlbmQtdGV4dCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzIyMjsgfQ0KICAgIC5ncmlkLWxpbmUgeyBzdHJva2U6ICNlMGUwZTA7IHN0cm9rZS13aWR0aDogMC44OyBzdHJva2UtZGFzaGFycmF5OiAzLDM7IH0NCiAgICAuYXhpcy1saW5lIHsgc3Ryb2tlOiAjMzMzOyBzdHJva2Utd2lkdGg6IDEuMjsgfQ0KICA8L3N0eWxlPg0KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiAvPg0KPHRleHQgeD0iMjUwLjAiIHk9IjMwIiBjbGFzcz0idGl0bGUiPkZpZy4gMS4gUHJlZGljdGVkIHZzLiBHcm91bmQtVHJ1dGggSW1wb3J0YW5jZSBTY29yZXM8L3RleHQ+PGxpbmUgeDE9IjY1LjAiIHkxPSI1MCIgeDI9IjY1LjAiIHkyPSIzOTAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNjUuMCIgeT0iNDA4IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wPC90ZXh0PjxsaW5lIHgxPSI2NSIgeTE9IjM5MC4wIiB4Mj0iNDY1IiB5Mj0iMzkwLjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTciIHk9IjM5NC4wIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+MC4wPC90ZXh0PjxsaW5lIHgxPSIxNDUuMCIgeTE9IjUwIiB4Mj0iMTQ1LjAiIHkyPSIzOTAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iMTQ1LjAiIHk9IjQwOCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjAuMjwvdGV4dD48bGluZSB4MT0iNjUiIHkxPSIzMjIuMCIgeDI9IjQ2NSIgeTI9IjMyMi4wIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjU3IiB5PSIzMjYuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuMjwvdGV4dD48bGluZSB4MT0iMjI1LjAiIHkxPSI1MCIgeDI9IjIyNS4wIiB5Mj0iMzkwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjIyNS4wIiB5PSI0MDgiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4wLjQ8L3RleHQ+PGxpbmUgeDE9IjY1IiB5MT0iMjU0LjAiIHgyPSI0NjUiIHkyPSIyNTQuMCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI1NyIgeT0iMjU4LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjQ8L3RleHQ+PGxpbmUgeDE9IjMwNS4wIiB5MT0iNTAiIHgyPSIzMDUuMCIgeTI9IjM5MCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIzMDUuMCIgeT0iNDA4IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC42PC90ZXh0PjxsaW5lIHgxPSI2NSIgeTE9IjE4NS45OTk5OTk5OTk5OTk5NyIgeDI9IjQ2NSIgeTI9IjE4NS45OTk5OTk5OTk5OTk5NyIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI1NyIgeT0iMTg5Ljk5OTk5OTk5OTk5OTk3IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+MC42PC90ZXh0PjxsaW5lIHgxPSIzODUuMCIgeTE9IjUwIiB4Mj0iMzg1LjAiIHkyPSIzOTAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iMzg1LjAiIHk9IjQwOCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjAuODwvdGV4dD48bGluZSB4MT0iNjUiIHkxPSIxMTcuOTk5OTk5OTk5OTk5OTkiIHgyPSI0NjUiIHkyPSIxMTcuOTk5OTk5OTk5OTk5OTkiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTciIHk9IjEyMS45OTk5OTk5OTk5OTk5OSIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuODwvdGV4dD48bGluZSB4MT0iNDY1LjAiIHkxPSI1MCIgeDI9IjQ2NS4wIiB5Mj0iMzkwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjQ2NS4wIiB5PSI0MDgiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4xLjA8L3RleHQ+PGxpbmUgeDE9IjY1IiB5MT0iNTAuMCIgeDI9IjQ2NSIgeTI9IjUwLjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTciIHk9IjU0LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4xLjA8L3RleHQ+PHJlY3QgeD0iNjUiIHk9IjUwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjM0MCIgZmlsbD0ibm9uZSIgY2xhc3M9ImF4aXMtbGluZSIgLz48bGluZSB4MT0iNjUiIHkxPSIzOTAuMCIgeDI9IjQ2NSIgeTI9IjUwLjAiIHN0cm9rZT0iI2QzMmYyZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1kYXNoYXJyYXk9IjUsNCIgLz48Y2lyY2xlIGN4PSI0MDIuNTIiIGN5PSIxMDcuNTIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM4Ljc3IiBjeT0iMTA0LjE4IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjM4OS4zMiIgY3k9Ijk1Ljg1IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMC4yNyIgY3k9IjkxLjc3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyOC4zMSIgY3k9IjkzLjc2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzMC42OSIgY3k9Ijg5Ljg0IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0Mi4wOSIgY3k9Ijg3LjA2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxOC44MiIgY3k9Ijg5LjkyIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzMi4yNyIgY3k9Ijk4LjYzIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0NS4wMCIgY3k9IjEyOC4wOSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDcuNTYiIGN5PSIxMTMuNjEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk2Ljk1IiBjeT0iOTYuNTgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQyLjk4IiBjeT0iOTAuNDIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAyLjk0IiBjeT0iOTUuNTUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI4LjE3IiBjeT0iOTkuNTQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE4LjYwIiBjeT0iOTEuNTAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAxLjk3IiBjeT0iOTQuNTkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk2LjIwIiBjeT0iOTAuMDIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEwLjYyIiBjeT0iOTMuMjEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iODYuODYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzg5LjA2IiBjeT0iODguOTMiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA4Ljk0IiBjeT0iODUuMTQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk1LjQ2IiBjeT0iODQuMzciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE4LjcwIiBjeT0iODUuNjYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE2Ljk3IiBjeT0iODIuMzkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI0LjcwIiBjeT0iOTAuMzciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkyLjY5IiBjeT0iODkuNjIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI2Ljc3IiBjeT0iMTEyLjM1IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQwNy42OCIgY3k9IjExMi41NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTYuMjIiIGN5PSI5Mi4zNCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTYuODciIGN5PSI5MC4yNCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTYuNDgiIGN5PSI5MS40NyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzQuNTUiIGN5PSI4OC45OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjUuMTkiIGN5PSI4Mi45MyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDUuMDMiIGN5PSI4Ni4yNSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTAuMzgiIGN5PSI4NS41OCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDguODIiIGN5PSI4NS40MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDQuODAiIGN5PSI4Ni4yMyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODEuNDEiIGN5PSI4OC40MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzNzcuMjAiIGN5PSI5MC4xOSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzNzcuODciIGN5PSI4Ny4xNCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDguMTIiIGN5PSI4OS45MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzkuNTgiIGN5PSI4OC4wMSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDQuNzIiIGN5PSI4My44NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTYuMDIiIGN5PSI4Ni41MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDAuMDkiIGN5PSI4Ni43NCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuMDMiIGN5PSI4NC4wMyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTkuMDUiIGN5PSI4NC4zNyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTQuNjQiIGN5PSI4OC45NyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzQuNjAiIGN5PSI4Ni42NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTUuMDYiIGN5PSI5MS44MyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDYuMTYiIGN5PSI5MC45NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTcuMTUiIGN5PSI5Mi4yOCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzEuMjUiIGN5PSI5Mi41NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzEuOTUiIGN5PSI5OC4wMCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTEuNzAiIGN5PSIxNTEuMTIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE1LjMwIiBjeT0iMTE0LjUyIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMy40OCIgY3k9IjEwMS40OCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzAuMDYiIGN5PSI5Ni4zMyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDcuMTkiIGN5PSI4OS4wMyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTIuNDMiIGN5PSI4Mi42MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzNzcuODAiIGN5PSI4NS45OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDguNjQiIGN5PSI5MS40OCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTYuMDEiIGN5PSI4Ni43MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDkuNDQiIGN5PSI4NS42NyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODguODciIGN5PSI4Ny45NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODcuODciIGN5PSI4NS40MCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDUuNDUiIGN5PSI4Ni41NyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDAuNTMiIGN5PSI5NC4xNiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0NDUuMDAiIGN5PSIxNzguNjciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzg4LjQzIiBjeT0iMTA2LjA1IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxNS4yMyIgY3k9IjEwMS40NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODkuNjMiIGN5PSI4OS4zNyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuNzIiIGN5PSI4NS40MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTUuMTUiIGN5PSI4NS4zMCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODkuNjAiIGN5PSI4Ny4zMiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTcuMTQiIGN5PSI4Ni41MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDUuNjUiIGN5PSI4Ni4wMSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuNDYiIGN5PSI4Ni4yNCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjMuMTUiIGN5PSI5NS4wNiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzQuMDUiIGN5PSI5MC42OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODYuODUiIGN5PSI5OS4xOSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjEuNTYiIGN5PSI5OS45OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuMzgiIGN5PSI5MC43NyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTcuMTYiIGN5PSI5MC40MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjMuNDMiIGN5PSI4OC4xOCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTguMTUiIGN5PSI4Ny4xNCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjMuODEiIGN5PSI4NC4xNyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjguMTEiIGN5PSI5MC42MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjkuODIiIGN5PSI5MS40OCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTAuODkiIGN5PSI4OC40MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDEuMjYiIGN5PSI5MS4yNCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzOTEuOTAiIGN5PSI4OS4yNyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjguODMiIGN5PSI4Ni4xNiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuMjkiIGN5PSI4My42MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuMzkiIGN5PSI5MC4wNyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDkuODUiIGN5PSI4OS4xMSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDAuNTYiIGN5PSI5MC45NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzNjkuMzIiIGN5PSIxMDMuNTgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIwLjAxIiBjeT0iMzA1LjQzIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjM4Ni43MiIgY3k9IjEwOS44MyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuNzEiIGN5PSI5Ny41NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTIuMTAiIGN5PSI5NS42MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzEuNjAiIGN5PSI5OS42OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDYuNzIiIGN5PSI5My4wOSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODMuNjAiIGN5PSI5Mi4wNyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjYuMTMiIGN5PSI5Mi44MiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzODUuODkiIGN5PSI4Mi43NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDQuNTkiIGN5PSI4My43NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSIzNzkuNjIiIGN5PSI4My4zOCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjguNTgiIGN5PSI4Mi4xMSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTkuNzgiIGN5PSI4Ni42NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzAuMDUiIGN5PSI5My45NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDMuNzciIGN5PSIxMDEuNjciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM5LjEwIiBjeT0iOTUuODgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkzLjAxIiBjeT0iMTAyLjQ3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxMi44OSIgY3k9IjE3OS4yOCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuNDciIGN5PSIxMDguMDAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA3Ljk3IiBjeT0iOTkuOTIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzg4LjQ5IiBjeT0iOTQuMDAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzg1LjkzIiBjeT0iOTAuMTUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEyLjg2IiBjeT0iODkuMDIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk0Ljk4IiBjeT0iODcuNjEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkyLjY1IiBjeT0iODUuOTEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA3LjU1IiBjeT0iODkuMDYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE1LjQ5IiBjeT0iODYuNTQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI4LjUyIiBjeT0iODYuNDIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM1LjY5IiBjeT0iODkuODIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iODkuNTUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAzLjQ4IiBjeT0iOTAuOTAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI0Ljk2IiBjeT0iOTEuOTEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk5LjI2IiBjeT0iODUuNzYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAwLjA3IiBjeT0iODQuNTYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk2LjU2IiBjeT0iODMuMTkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIwLjMzIiBjeT0iODkuOTQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEwLjkzIiBjeT0iODkuODAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM1LjI1IiBjeT0iODcuOTgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA1LjEzIiBjeT0iOTAuODUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAwLjc3IiBjeT0iODUuNTciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEwLjQ0IiBjeT0iODQuNDkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzY5LjQ0IiBjeT0iODQuNTAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk1LjIyIiBjeT0iODguMjgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA2LjU5IiBjeT0iODUuNDYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAxLjAzIiBjeT0iOTYuNDUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzg5LjUxIiBjeT0iMTE5Ljc2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0My41OCIgY3k9IjEwOC43MyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDAuNzEiIGN5PSI5NC45MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjIuNjkiIGN5PSI4Ni45OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0NDAuMjEiIGN5PSI4Ny45NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0NDUuMDAiIGN5PSI4Ny44OSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0NDUuMDAiIGN5PSI4Ni4wMCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDIuODkiIGN5PSI4Ny43MSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTQuMjYiIGN5PSI5MC4xMCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTcuNzYiIGN5PSI4OS41NyIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjEuMzQiIGN5PSI4Ny40MCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDcuNDMiIGN5PSI5My43MCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MzAuMTUiIGN5PSI4Ny41NiIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MDUuMzQiIGN5PSI4OC4xMCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MTYuNTMiIGN5PSIxMDguNDgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE5LjQzIiBjeT0iMTEzLjE3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzNC4wOCIgY3k9Ijk2LjA5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0NS4wMCIgY3k9Ijg5LjkyIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzNC4yOSIgY3k9Ijg2Ljg3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyNS4zMyIgY3k9Ijg0Ljg2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjM5Ny40MiIgY3k9Ijg0LjY3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzOC4wNSIgY3k9IjgzLjY1IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzOS45NiIgY3k9IjgzLjQ5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0NS4wMCIgY3k9IjgyLjU2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzMy4yOCIgY3k9IjkzLjkxIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0NS4wMCIgY3k9IjExNy41OCIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjAuNDMiIGN5PSIzMTAuMTQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA4LjIzIiBjeT0iMTA2Ljc2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMi4yOSIgY3k9Ijk1LjgzIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0My4xNSIgY3k9IjkxLjYzIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyNi43MyIgY3k9IjkxLjI5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMC41NiIgY3k9Ijk2LjQwIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMC4zMCIgY3k9IjkzLjAwIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0NS4wMCIgY3k9Ijg2Ljg1IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQwOS4yOSIgY3k9Ijg2LjM3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyNS45NCIgY3k9IjkyLjM1IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQwOC4wMiIgY3k9Ijg5LjE5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQwMi4xMyIgY3k9IjkwLjM4IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyNS42NiIgY3k9Ijg4LjE4IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMC42NSIgY3k9Ijg2LjMyIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzMS43MSIgY3k9IjkwLjM3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMi42MCIgY3k9IjkyLjM3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjM4My41MSIgY3k9IjkwLjc5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMS45MCIgY3k9IjkzLjQwIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxNi4zNyIgY3k9IjkwLjU5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQyMS4wMiIgY3k9IjkzLjM4IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxOS43MyIgY3k9Ijg5LjA3IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxOC44MyIgY3k9IjkyLjk2IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQwMS45NSIgY3k9Ijk1LjAxIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjM5MC4zNSIgY3k9IjkxLjk5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQ0NS4wMCIgY3k9Ijg5LjExIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxMi45NyIgY3k9Ijk3LjAwIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzNi42MyIgY3k9Ijk3Ljg0IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQzNC45MiIgY3k9IjEyNi4wOSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjIuOTIiIGN5PSIxMTAuMDIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI0LjYwIiBjeT0iOTcuNDUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk3LjEwIiBjeT0iOTYuNTAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk2LjIyIiBjeT0iODcuNjEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI3LjQ1IiBjeT0iODcuOTciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE0LjQ4IiBjeT0iODguMTkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkxLjYyIiBjeT0iOTEuMjciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA3LjQ0IiBjeT0iODcuMDkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM0LjcyIiBjeT0iODguOTYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE1LjY0IiBjeT0iODkuODIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA3LjgxIiBjeT0iOTEuNTAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE2LjM0IiBjeT0iOTYuMjMiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE4LjI2IiBjeT0iOTUuMjMiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk3Ljc0IiBjeT0iOTUuOTUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ0LjQxIiBjeT0iODguMDYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEwLjM4IiBjeT0iODkuOTYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkwLjM1IiBjeT0iOTIuNjUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIwLjc1IiBjeT0iODYuNjIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIzLjYzIiBjeT0iODMuNDkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA5LjU5IiBjeT0iODkuNDQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkyLjg5IiBjeT0iODUuNzIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzkwLjIyIiBjeT0iOTEuMzMiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI3LjA3IiBjeT0iOTcuMjAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEyLjQ2IiBjeT0iOTguMDAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIxLjE0IiBjeT0iMTE0Ljc5IiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjxjaXJjbGUgY3g9IjQxNy43NyIgY3k9IjE1Ni40NSIgcj0iMy41IiBmaWxsPSIjMTk3NmQyIiBmaWxsLW9wYWNpdHk9IjAuNiIgc3Ryb2tlPSIjMGQ0N2ExIiBzdHJva2Utd2lkdGg9IjAuNiIgLz48Y2lyY2xlIGN4PSI0MjguODYiIGN5PSIxMTAuMDQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iOTguODkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQyLjc3IiBjeT0iOTUuNzAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iMzk5LjA1IiBjeT0iOTEuMTUiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iODguOTgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM3Ljk5IiBjeT0iODUuNTYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIxLjE5IiBjeT0iODguNTEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iODUuMzkiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA4LjI5IiBjeT0iODYuNjYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI3LjAzIiBjeT0iODUuMjYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iODguOTYiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIxLjc2IiBjeT0iODMuNjAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIwLjc5IiBjeT0iOTEuMTciIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE3LjQ3IiBjeT0iODUuNzgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA2LjIzIiBjeT0iODguNDMiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDI1LjUzIiBjeT0iODYuMDgiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQ1LjAwIiBjeT0iOTIuMTAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDQxLjQyIiBjeT0iODcuMDEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDEwLjk0IiBjeT0iODguODIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDM4LjE5IiBjeT0iODguMDAiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDE5LjQ4IiBjeT0iODguMjQiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDA3LjQwIiBjeT0iODMuMjEiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDIyLjQ0IiBjeT0iOTAuMTMiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDMyLjc4IiBjeT0iOTQuNjIiIHI9IjMuNSIgZmlsbD0iIzE5NzZkMiIgZmlsbC1vcGFjaXR5PSIwLjYiIHN0cm9rZT0iIzBkNDdhMSIgc3Ryb2tlLXdpZHRoPSIwLjYiIC8+PGNpcmNsZSBjeD0iNDAzLjEzIiBjeT0iMjI2LjQzIiByPSIzLjUiIGZpbGw9IiMxOTc2ZDIiIGZpbGwtb3BhY2l0eT0iMC42IiBzdHJva2U9IiMwZDQ3YTEiIHN0cm9rZS13aWR0aD0iMC42IiAvPjx0ZXh0IHg9IjI2NS4wIiB5PSI0MzUiIGNsYXNzPSJheGlzLWxhYmVsIj5Hcm91bmQtVHJ1dGggSHVtYW4gQW5ub3RhdGlvbiBTY29yZTwvdGV4dD48dGV4dCB4PSIyMCIgeT0iMjIwLjAiIGNsYXNzPSJheGlzLWxhYmVsIiB0cmFuc2Zvcm09InJvdGF0ZSgtOTAgMjAgMjIwLjApIj5Nb2RlbCBQcmVkaWN0ZWQgSW1wb3J0YW5jZSBTY29yZTwvdGV4dD48cmVjdCB4PSI4MCIgeT0iNjUiIHdpZHRoPSIxNTAiIGhlaWdodD0iNjAiIHJ4PSI0IiBmaWxsPSIjZmFmYWZhIiBzdHJva2U9IiNiYmIiIHN0cm9rZS13aWR0aD0iMSIgLz48dGV4dCB4PSI5MCIgeT0iODUiIHN0eWxlPSJmb250LXNpemU6MTFweDsgZmlsbDojMzMzOyBmb250LXdlaWdodDpib2xkOyI+VGVzdCBTYW1wbGVzOiBOID0gMjQ5PC90ZXh0Pjx0ZXh0IHg9IjkwIiB5PSIxMDIiIHN0eWxlPSJmb250LXNpemU6MTFweDsgZmlsbDojMzMzOyI+UGVhcnNvbiByID0gLTAuMDUwNjwvdGV4dD48dGV4dCB4PSI5MCIgeT0iMTE3IiBzdHlsZT0iZm9udC1zaXplOjExcHg7IGZpbGw6IzY2NjsiPnAtdmFsdWUgPSAwLjQyNjQgKHAgJmd0OyAwLjA1KTwvdGV4dD48cmVjdCB4PSIzMzUiIHk9IjM0NSIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzNSIgcng9IjMiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2NjYyIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PGxpbmUgeDE9IjM0NSIgeTE9IjM1NyIgeDI9IjM3MCIgeTI9IjM1NyIgc3Ryb2tlPSIjZDMyZjJmIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWRhc2hhcnJheT0iNCwzIiAvPjx0ZXh0IHg9IjM3NyIgeT0iMzYxIiBjbGFzcz0ibGVnZW5kLXRleHQiPklkZWFsICh5ID0geCk8L3RleHQ+PGNpcmNsZSBjeD0iMzU3IiBjeT0iMzcxIiByPSIzIiBmaWxsPSIjMTk3NmQyIiAvPjx0ZXh0IHg9IjM3NyIgeT0iMzc0IiBjbGFzcz0ibGVnZW5kLXRleHQiPlByZWRpY3Rpb25zPC90ZXh0Pjwvc3ZnPg0K" alt="Figure 1" class="vector-figure" />
+          </div>
+          <div class="figure-caption">
+            <strong>Figure 1:</strong> <em>Predicted vs. Ground-Truth Saliency Correlation</em> &mdash; Scatter plot of 249 test segments across Checkpoints A and B. Blue line denotes y=x ideal calibration. Clustering around 0.86-0.88 confirms narrow dynamic variance.
+          </div>
+        </div>
+        
+
+        <div class="figure-card">
+          <div class="figure-img-wrap">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NTAgMzgwIiB3aWR0aD0iNTUwIiBoZWlnaHQ9IjM4MCI+DQogIDxzdHlsZT4NCiAgICB0ZXh0IHsgZm9udC1mYW1pbHk6ICJUaW1lcyBOZXcgUm9tYW4iLCBUaW1lcywgc2VyaWY7IH0NCiAgICAudGl0bGUgeyBmb250LXNpemU6IDE1cHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBmaWxsOiAjMTExOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9DQogICAgLmF4aXMtbGFiZWwgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiBub3JtYWw7IGZpbGw6ICMyMjI7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0NCiAgICAudGljay1sYWJlbCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzQ0NDsgfQ0KICAgIC5sZWdlbmQtdGV4dCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzIyMjsgfQ0KICAgIC5ncmlkLWxpbmUgeyBzdHJva2U6ICNlMGUwZTA7IHN0cm9rZS13aWR0aDogMC44OyBzdHJva2UtZGFzaGFycmF5OiAzLDM7IH0NCiAgICAuYXhpcy1saW5lIHsgc3Ryb2tlOiAjMzMzOyBzdHJva2Utd2lkdGg6IDEuMjsgfQ0KICA8L3N0eWxlPg0KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiAvPg0KPHRleHQgeD0iMjc1LjAiIHk9IjMwIiBjbGFzcz0idGl0bGUiPkZpZy4gMi4gRW1waXJpY2FsIERpc3RyaWJ1dGlvbiBvZiBHcm91bmQtVHJ1dGggdnMuIE1vZGVsIFByZWRpY3Rpb25zPC90ZXh0PjxsaW5lIHgxPSI2MCIgeTE9IjMyMC4wIiB4Mj0iNTIwIiB5Mj0iMzIwLjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTIiIHk9IjMyNC4wIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+MDwvdGV4dD48bGluZSB4MT0iNjAiIHkxPSIyODQuOTU3ODE5NTk3NjYzODQiIHgyPSI1MjAiIHkyPSIyODQuOTU3ODE5NTk3NjYzODQiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTIiIHk9IjI4OC45NTc4MTk1OTc2NjM4NCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjMwPC90ZXh0PjxsaW5lIHgxPSI2MCIgeTE9IjI0OS45MTU2MzkxOTUzMjc3IiB4Mj0iNTIwIiB5Mj0iMjQ5LjkxNTYzOTE5NTMyNzciIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTIiIHk9IjI1My45MTU2MzkxOTUzMjc3IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+NjA8L3RleHQ+PGxpbmUgeDE9IjYwIiB5MT0iMjE0Ljg3MzQ1ODc5Mjk5MTU2IiB4Mj0iNTIwIiB5Mj0iMjE0Ljg3MzQ1ODc5Mjk5MTU2IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjUyIiB5PSIyMTguODczNDU4NzkyOTkxNTYiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj45MDwvdGV4dD48bGluZSB4MT0iNjAiIHkxPSIxNzkuODMxMjc4MzkwNjU1NDMiIHgyPSI1MjAiIHkyPSIxNzkuODMxMjc4MzkwNjU1NDMiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTIiIHk9IjE4My44MzEyNzgzOTA2NTU0MyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjEyMDwvdGV4dD48bGluZSB4MT0iNjAiIHkxPSIxNDQuNzg5MDk3OTg4MzE5MjciIHgyPSI1MjAiIHkyPSIxNDQuNzg5MDk3OTg4MzE5MjciIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTIiIHk9IjE0OC43ODkwOTc5ODgzMTkyNyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjE1MDwvdGV4dD48bGluZSB4MT0iNjAiIHkxPSIxMDkuNzQ2OTE3NTg1OTgzMSIgeDI9IjUyMCIgeTI9IjEwOS43NDY5MTc1ODU5ODMxIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjUyIiB5PSIxMTMuNzQ2OTE3NTg1OTgzMSIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjE4MDwvdGV4dD48bGluZSB4MT0iNjAiIHkxPSI3NC43MDQ3MzcxODM2NDY5NyIgeDI9IjUyMCIgeTI9Ijc0LjcwNDczNzE4MzY0Njk3IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjUyIiB5PSI3OC43MDQ3MzcxODM2NDY5NyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjIxMDwvdGV4dD48bGluZSB4MT0iNjAuMCIgeTE9IjMyMCIgeDI9IjYwLjAiIHkyPSIzMjUiIGNsYXNzPSJheGlzLWxpbmUiIC8+PHRleHQgeD0iNjAuMCIgeT0iMzM4IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wPC90ZXh0PjxsaW5lIHgxPSIxNTIuMCIgeTE9IjMyMCIgeDI9IjE1Mi4wIiB5Mj0iMzI1IiBjbGFzcz0iYXhpcy1saW5lIiAvPjx0ZXh0IHg9IjE1Mi4wIiB5PSIzMzgiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4wLjI8L3RleHQ+PGxpbmUgeDE9IjI0NC4wIiB5MT0iMzIwIiB4Mj0iMjQ0LjAiIHkyPSIzMjUiIGNsYXNzPSJheGlzLWxpbmUiIC8+PHRleHQgeD0iMjQ0LjAiIHk9IjMzOCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjAuNDwvdGV4dD48bGluZSB4MT0iMzM2LjAiIHkxPSIzMjAiIHgyPSIzMzYuMCIgeTI9IjMyNSIgY2xhc3M9ImF4aXMtbGluZSIgLz48dGV4dCB4PSIzMzYuMCIgeT0iMzM4IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC42PC90ZXh0PjxsaW5lIHgxPSI0MjguMCIgeTE9IjMyMCIgeDI9IjQyOC4wIiB5Mj0iMzI1IiBjbGFzcz0iYXhpcy1saW5lIiAvPjx0ZXh0IHg9IjQyOC4wIiB5PSIzMzgiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4wLjg8L3RleHQ+PGxpbmUgeDE9IjUyMC4wIiB5MT0iMzIwIiB4Mj0iNTIwLjAiIHkyPSIzMjUiIGNsYXNzPSJheGlzLWxpbmUiIC8+PHRleHQgeD0iNTIwLjAiIHk9IjMzOCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjEuMDwvdGV4dD48cmVjdCB4PSI2Mi4wIiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSI3Mi43IiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSI4NS4wIiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSI5NS43IiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIxMDguMCIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMTE4LjciIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjEzMS4wIiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIxNDEuNyIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjZjU3YzAwIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iI2U2NTEwMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMTU0LjAiIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iIzM4OGUzYyIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiMxYjVlMjAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjE2NC43IiB5PSIzMTcuNyIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIyLjMiIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIxNzcuMCIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMTg3LjciIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjIwMC4wIiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIyMTAuNyIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjZjU3YzAwIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iI2U2NTEwMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMjIzLjAiIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iIzM4OGUzYyIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiMxYjVlMjAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjIzMy43IiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIyNDYuMCIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMjU2LjciIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjI2OS4wIiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIyNzkuNyIgeT0iMzE4LjgiIHdpZHRoPSI5LjciIGhlaWdodD0iMS4yIiBmaWxsPSIjZjU3YzAwIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iI2U2NTEwMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMjkyLjAiIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iIzM4OGUzYyIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiMxYjVlMjAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjMwMi43IiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIzMTUuMCIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMzI1LjciIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjMzOC4wIiB5PSIzMjAuMCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIwLjAiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIzNDguNyIgeT0iMzE3LjciIHdpZHRoPSI5LjciIGhlaWdodD0iMi4zIiBmaWxsPSIjZjU3YzAwIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iI2U2NTEwMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMzYxLjAiIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iIzM4OGUzYyIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiMxYjVlMjAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjM3MS43IiB5PSIzMTguOCIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIxLjIiIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSIzODQuMCIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iMzk0LjciIHk9IjMxOC44IiB3aWR0aD0iOS43IiBoZWlnaHQ9IjEuMiIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjQwNy4wIiB5PSIzMDkuNSIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIxMC41IiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iNDE3LjciIHk9IjMxNi41IiB3aWR0aD0iOS43IiBoZWlnaHQ9IjMuNSIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjQzMC4wIiB5PSIyNDguNyIgd2lkdGg9IjkuNyIgaGVpZ2h0PSI3MS4zIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iNDQwLjciIHk9IjI5NC4zIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjI1LjciIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSI0NTMuMCIgeT0iMTkzLjgiIHdpZHRoPSI5LjciIGhlaWdodD0iMTI2LjIiIGZpbGw9IiMzODhlM2MiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjMWI1ZTIwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSI0NjMuNyIgeT0iODUuMiIgd2lkdGg9IjkuNyIgaGVpZ2h0PSIyMzQuOCIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjQ3Ni4wIiB5PSIyMzcuMSIgd2lkdGg9IjkuNyIgaGVpZ2h0PSI4Mi45IiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iNDg2LjciIHk9IjMwMS4zIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjE4LjciIGZpbGw9IiNmNTdjMDAiIGZpbGwtb3BhY2l0eT0iMC44NSIgc3Ryb2tlPSIjZTY1MTAwIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48cmVjdCB4PSI0OTkuMCIgeT0iMzIwLjAiIHdpZHRoPSI5LjciIGhlaWdodD0iMC4wIiBmaWxsPSIjMzg4ZTNjIiBmaWxsLW9wYWNpdHk9IjAuODUiIHN0cm9rZT0iIzFiNWUyMCIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iNTA5LjciIHk9IjMyMC4wIiB3aWR0aD0iOS43IiBoZWlnaHQ9IjAuMCIgZmlsbD0iI2Y1N2MwMCIgZmlsbC1vcGFjaXR5PSIwLjg1IiBzdHJva2U9IiNlNjUxMDAiIHN0cm9rZS13aWR0aD0iMC44IiAvPjxyZWN0IHg9IjYwIiB5PSI1MCIgd2lkdGg9IjQ2MCIgaGVpZ2h0PSIyNzAiIGZpbGw9Im5vbmUiIGNsYXNzPSJheGlzLWxpbmUiIC8+PHRleHQgeD0iMjkwLjAiIHk9IjM2MiIgY2xhc3M9ImF4aXMtbGFiZWwiPkltcG9ydGFuY2UgU2NvcmUgQmluPC90ZXh0Pjx0ZXh0IHg9IjIwIiB5PSIxODUuMCIgY2xhc3M9ImF4aXMtbGFiZWwiIHRyYW5zZm9ybT0icm90YXRlKC05MCAyMCAxODUuMCkiPlNlZ21lbnQgRnJlcXVlbmN5PC90ZXh0PjxyZWN0IHg9Ijg1IiB5PSI3MCIgd2lkdGg9IjE2NSIgaGVpZ2h0PSI0OCIgcng9IjQiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2NjYyIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHJlY3QgeD0iOTUiIHk9IjgwIiB3aWR0aD0iMTQiIGhlaWdodD0iMTIiIGZpbGw9IiMzODhlM2MiIHN0cm9rZT0iIzFiNWUyMCIgLz48dGV4dCB4PSIxMTUiIHk9IjkwIiBjbGFzcz0ibGVnZW5kLXRleHQiPkdyb3VuZCBUcnV0aCAozrw9MC44NzUsIM+DPTAuMDQzKTwvdGV4dD48cmVjdCB4PSI5NSIgeT0iOTgiIHdpZHRoPSIxNCIgaGVpZ2h0PSIxMiIgZmlsbD0iI2Y1N2MwMCIgc3Ryb2tlPSIjZTY1MTAwIiAvPjx0ZXh0IHg9IjExNSIgeT0iMTA4IiBjbGFzcz0ibGVnZW5kLXRleHQiPlByZWRpY3Rpb25zICjOvD0wLjg2Nywgz4M9MC4wNzEpPC90ZXh0Pjwvc3ZnPg0K" alt="Figure 2" class="vector-figure" />
+          </div>
+          <div class="figure-caption">
+            <strong>Figure 2:</strong> <em>Score Distribution Density & Cumulative Dispersion</em> &mdash; Kernel density estimation (KDE) and empirical cumulative distribution function (ECDF) contrasting ground truth against model outputs.
+          </div>
+        </div>
+        
+As illustrated in Figure 1 ([<code>fig1_pred_vs_gt.svg</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/figures/fig1_pred_vs_gt.svg) / [<code>fig1_pred_vs_gt.png</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/figures/fig1_pred_vs_gt.png)), predictions cluster in a horizontal band around 0.86–0.88, failing to align with the <span class="inline-math"><em>y = x</em></span> reference diagonal.
+
+<h3 class="subsection-title">4.2 Per-Dataset Type Breakdown</h3>
+Evaluating Checkpoint B separately on the SumMe and TVSum test partitions reveals:
+- <strong>SumMe Test Set (6 videos, 117 segments):</strong> <span class="inline-math"><em>\text{MSE} = 0.007768</em></span>, Pearson <span class="inline-math"><em>r = -0.1293</em></span>, <span class="inline-math"><em>F_1 = 0.9957</em></span>.
+- <strong>TVSum Test Set (6 videos, 132 segments):</strong> <span class="inline-math"><em>\text{MSE} = 0.006952</em></span>, Pearson <span class="inline-math"><em>r = +0.0126</em></span>, <span class="inline-math"><em>F_1 = 0.9924</em></span>.
+
+While TVSum achieves a slightly lower MSE and non-negative correlation, neither partition demonstrates statistically meaningful saliency prediction (<span class="inline-math"><em>p > 0.1</em></span> for both).
+
+---
+
+<h2 class="section-title">5. Ablation Studies</h2>
+
+To evaluate the contribution of individual modalities, we conducted a systematic ablation study by zeroing feature representations at inference time without retraining. Results are presented in Table III, Figure 3, and Figure 5.
+
+        <div class="figure-card">
+          <div class="figure-img-wrap">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2ODAgMzYwIiB3aWR0aD0iNjgwIiBoZWlnaHQ9IjM2MCI+DQogIDxzdHlsZT4NCiAgICB0ZXh0IHsgZm9udC1mYW1pbHk6ICJUaW1lcyBOZXcgUm9tYW4iLCBUaW1lcywgc2VyaWY7IH0NCiAgICAudGl0bGUgeyBmb250LXNpemU6IDE1cHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBmaWxsOiAjMTExOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9DQogICAgLmF4aXMtbGFiZWwgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiBub3JtYWw7IGZpbGw6ICMyMjI7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0NCiAgICAudGljay1sYWJlbCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzQ0NDsgfQ0KICAgIC5sZWdlbmQtdGV4dCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzIyMjsgfQ0KICAgIC5ncmlkLWxpbmUgeyBzdHJva2U6ICNlMGUwZTA7IHN0cm9rZS13aWR0aDogMC44OyBzdHJva2UtZGFzaGFycmF5OiAzLDM7IH0NCiAgICAuYXhpcy1saW5lIHsgc3Ryb2tlOiAjMzMzOyBzdHJva2Utd2lkdGg6IDEuMjsgfQ0KICA8L3N0eWxlPg0KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiAvPg0KPHRleHQgeD0iMzQwLjAiIHk9IjMyIiBjbGFzcz0idGl0bGUiPkZpZy4gMy4gQWJsYXRpb24gU3R1ZHk6IEltcGFjdCBvZiBNb2RhbGl0eSBJbnB1dHMgb24gRXJyb3IgYW5kIENvcnJlbGF0aW9uPC90ZXh0Pjx0ZXh0IHg9IjIwMS4yNSIgeT0iNDMiIHN0eWxlPSJmb250LXNpemU6MTJweDsgZm9udC13ZWlnaHQ6Ym9sZDsgZmlsbDojMzMzOyB0ZXh0LWFuY2hvcjptaWRkbGU7Ij4oYSkgTWVhbiBTcXVhcmVkIEVycm9yIChMb3dlciBpcyBCZXR0ZXIpPC90ZXh0PjxsaW5lIHgxPSI3MCIgeTE9IjI3NS4wIiB4Mj0iMzMyLjUiIHkyPSIyNzUuMCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI2MiIgeT0iMjc5LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjAwPC90ZXh0PjxsaW5lIHgxPSI3MCIgeTE9IjIyMC4wIiB4Mj0iMzMyLjUiIHkyPSIyMjAuMCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI2MiIgeT0iMjI0LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjIwPC90ZXh0PjxsaW5lIHgxPSI3MCIgeTE9IjE2NS4wIiB4Mj0iMzMyLjUiIHkyPSIxNjUuMCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI2MiIgeT0iMTY5LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjQwPC90ZXh0PjxsaW5lIHgxPSI3MCIgeTE9IjEwOS45OTk5OTk5OTk5OTk5NyIgeDI9IjMzMi41IiB5Mj0iMTA5Ljk5OTk5OTk5OTk5OTk3IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjYyIiB5PSIxMTMuOTk5OTk5OTk5OTk5OTciIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjYwPC90ZXh0PjxsaW5lIHgxPSI3MCIgeTE9IjU1LjAiIHgyPSIzMzIuNSIgeTI9IjU1LjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNjIiIHk9IjU5LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjgwPC90ZXh0PjxyZWN0IHg9IjcwIiB5PSI1NSIgd2lkdGg9IjI2Mi41IiBoZWlnaHQ9IjIyMCIgZmlsbD0ibm9uZSIgY2xhc3M9ImF4aXMtbGluZSIgLz48cmVjdCB4PSI4My4xIiB5PSIyNzMuMCIgd2lkdGg9IjM5LjQiIGhlaWdodD0iMi4wIiBmaWxsPSIjMTk3NmQyIiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC44IiAvPjx0ZXh0IHg9IjEwMi44IiB5PSIyNjguMCIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzExMTsgZm9udC13ZWlnaHQ6Ym9sZDsgdGV4dC1hbmNob3I6bWlkZGxlOyI+MC4wMDczPC90ZXh0Pjx0ZXh0IHg9IjEwMi44IiB5PSIyOTMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IHRleHQtYW5jaG9yOm1pZGRsZTsiIHRyYW5zZm9ybT0icm90YXRlKDI1IDEwMi44IDI5MykiPk11bHRpbW9kYWwgKFYrVCk8L3RleHQ+PHJlY3QgeD0iMTQ4LjgiIHk9IjI2My40IiB3aWR0aD0iMzkuNCIgaGVpZ2h0PSIxMS42IiBmaWxsPSIjMzg4ZTNjIiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC44IiAvPjx0ZXh0IHg9IjE2OC40IiB5PSIyNTguNCIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzExMTsgZm9udC13ZWlnaHQ6Ym9sZDsgdGV4dC1hbmNob3I6bWlkZGxlOyI+MC4wNDIzPC90ZXh0Pjx0ZXh0IHg9IjE2OC40IiB5PSIyOTMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IHRleHQtYW5jaG9yOm1pZGRsZTsiIHRyYW5zZm9ybT0icm90YXRlKDI1IDE2OC40IDI5MykiPlZpc3VhbCBPbmx5PC90ZXh0PjxyZWN0IHg9IjIxNC40IiB5PSIyNjUuOCIgd2lkdGg9IjM5LjQiIGhlaWdodD0iOS4yIiBmaWxsPSIjZjU3YzAwIiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC44IiAvPjx0ZXh0IHg9IjIzNC4xIiB5PSIyNjAuOCIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzExMTsgZm9udC13ZWlnaHQ6Ym9sZDsgdGV4dC1hbmNob3I6bWlkZGxlOyI+MC4wMzM1PC90ZXh0Pjx0ZXh0IHg9IjIzNC4xIiB5PSIyOTMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IHRleHQtYW5jaG9yOm1pZGRsZTsiIHRyYW5zZm9ybT0icm90YXRlKDI1IDIzNC4xIDI5MykiPlRleHQgT25seTwvdGV4dD48cmVjdCB4PSIyODAuMCIgeT0iNjYuMyIgd2lkdGg9IjM5LjQiIGhlaWdodD0iMjA4LjciIGZpbGw9IiNkMzJmMmYiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHRleHQgeD0iMjk5LjciIHk9IjYxLjMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMxMTE7IGZvbnQtd2VpZ2h0OmJvbGQ7IHRleHQtYW5jaG9yOm1pZGRsZTsiPjAuNzU4ODwvdGV4dD48dGV4dCB4PSIyOTkuNyIgeT0iMjkzIiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMjIyOyB0ZXh0LWFuY2hvcjptaWRkbGU7IiB0cmFuc2Zvcm09InJvdGF0ZSgyNSAyOTkuNyAyOTMpIj5ObyBJbnB1dCAoQmFzZWxpbmUpPC90ZXh0Pjx0ZXh0IHg9IjUxMy43NSIgeT0iNDMiIHN0eWxlPSJmb250LXNpemU6MTJweDsgZm9udC13ZWlnaHQ6Ym9sZDsgZmlsbDojMzMzOyB0ZXh0LWFuY2hvcjptaWRkbGU7Ij4oYikgUGVhcnNvbiBDb3JyZWxhdGlvbiByPC90ZXh0PjxsaW5lIHgxPSIzODIuNSIgeTE9IjI3NS4wIiB4Mj0iNjQ1LjAiIHkyPSIyNzUuMCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIzNzQuNSIgeT0iMjc5LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4tMC4xNTwvdGV4dD48bGluZSB4MT0iMzgyLjUiIHkxPSIyMjAuMCIgeDI9IjY0NS4wIiB5Mj0iMjIwLjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iMzc0LjUiIHk9IjIyNC4wIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+LTAuMTA8L3RleHQ+PGxpbmUgeDE9IjM4Mi41IiB5MT0iMTY1LjAiIHgyPSI2NDUuMCIgeTI9IjE2NS4wIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjM3NC41IiB5PSIxNjkuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPi0wLjA1PC90ZXh0PjxsaW5lIHgxPSIzODIuNSIgeTE9IjEwOS45OTk5OTk5OTk5OTk5NyIgeDI9IjY0NS4wIiB5Mj0iMTA5Ljk5OTk5OTk5OTk5OTk3IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjM3NC41IiB5PSIxMTMuOTk5OTk5OTk5OTk5OTciIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjAwPC90ZXh0PjxsaW5lIHgxPSIzODIuNSIgeTE9IjU1LjAiIHgyPSI2NDUuMCIgeTI9IjU1LjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iMzc0LjUiIHk9IjU5LjAiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjA1PC90ZXh0PjxsaW5lIHgxPSIzODIuNSIgeTE9IjExMC4wMDAwMDAwMDAwMDAwMyIgeDI9IjY0NS4wIiB5Mj0iMTEwLjAwMDAwMDAwMDAwMDAzIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMS4yIiAvPjxyZWN0IHg9IjM4Mi41IiB5PSI1NSIgd2lkdGg9IjI2Mi41IiBoZWlnaHQ9IjIyMCIgZmlsbD0ibm9uZSIgY2xhc3M9ImF4aXMtbGluZSIgLz48cmVjdCB4PSIzOTUuNiIgeT0iMTEwLjAiIHdpZHRoPSIzOS40IiBoZWlnaHQ9IjU1LjciIGZpbGw9IiMxOTc2ZDIiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHRleHQgeD0iNDE1LjMiIHk9IjE3Ny43IiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMTExOyBmb250LXdlaWdodDpib2xkOyB0ZXh0LWFuY2hvcjptaWRkbGU7Ij4tMC4wNTA2PC90ZXh0Pjx0ZXh0IHg9IjQxNS4zIiB5PSIyOTMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IHRleHQtYW5jaG9yOm1pZGRsZTsiIHRyYW5zZm9ybT0icm90YXRlKDI1IDQxNS4zIDI5MykiPk11bHRpbW9kYWwgKFYrVCk8L3RleHQ+PHJlY3QgeD0iNDYxLjIiIHk9IjExMC4wIiB3aWR0aD0iMzkuNCIgaGVpZ2h0PSIxMTMuNyIgZmlsbD0iIzM4OGUzYyIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48dGV4dCB4PSI0ODAuOSIgeT0iMjM1LjciIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMxMTE7IGZvbnQtd2VpZ2h0OmJvbGQ7IHRleHQtYW5jaG9yOm1pZGRsZTsiPi0wLjEwMzQ8L3RleHQ+PHRleHQgeD0iNDgwLjkiIHk9IjI5MyIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgdGV4dC1hbmNob3I6bWlkZGxlOyIgdHJhbnNmb3JtPSJyb3RhdGUoMjUgNDgwLjkgMjkzKSI+VmlzdWFsIE9ubHk8L3RleHQ+PHJlY3QgeD0iNTI2LjkiIHk9IjExMC4wIiB3aWR0aD0iMzkuNCIgaGVpZ2h0PSI3LjAiIGZpbGw9IiNmNTdjMDAiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PHRleHQgeD0iNTQ2LjYiIHk9IjEyOS4wIiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMTExOyBmb250LXdlaWdodDpib2xkOyB0ZXh0LWFuY2hvcjptaWRkbGU7Ij4tMC4wMDY0PC90ZXh0Pjx0ZXh0IHg9IjU0Ni42IiB5PSIyOTMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IHRleHQtYW5jaG9yOm1pZGRsZTsiIHRyYW5zZm9ybT0icm90YXRlKDI1IDU0Ni42IDI5MykiPlRleHQgT25seTwvdGV4dD48cmVjdCB4PSI1OTIuNSIgeT0iOTAuMCIgd2lkdGg9IjM5LjQiIGhlaWdodD0iMjAuMCIgZmlsbD0iI2QzMmYyZiIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48dGV4dCB4PSI2MTIuMiIgeT0iODUuMCIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzExMTsgZm9udC13ZWlnaHQ6Ym9sZDsgdGV4dC1hbmNob3I6bWlkZGxlOyI+MC4wMTgyPC90ZXh0Pjx0ZXh0IHg9IjYxMi4yIiB5PSIyOTMiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IHRleHQtYW5jaG9yOm1pZGRsZTsiIHRyYW5zZm9ybT0icm90YXRlKDI1IDYxMi4yIDI5MykiPk5vIElucHV0IChCYXNlbGluZSk8L3RleHQ+PC9zdmc+DQo=" alt="Figure 3" class="vector-figure" />
+          </div>
+          <div class="figure-caption">
+            <strong>Figure 3:</strong> <em>Multimodal Feature Ablation Analysis</em> &mdash; Mean Squared Error (MSE) degradation across Full Multimodal, Visual-Only, Text-Only, and Zero-Input configurations.
+          </div>
+        </div>
+        
+
+        <div class="figure-card">
+          <div class="figure-img-wrap">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NDAgMzgwIiB3aWR0aD0iNTQwIiBoZWlnaHQ9IjM4MCI+DQogIDxzdHlsZT4NCiAgICB0ZXh0IHsgZm9udC1mYW1pbHk6ICJUaW1lcyBOZXcgUm9tYW4iLCBUaW1lcywgc2VyaWY7IH0NCiAgICAudGl0bGUgeyBmb250LXNpemU6IDE1cHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBmaWxsOiAjMTExOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9DQogICAgLmF4aXMtbGFiZWwgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiBub3JtYWw7IGZpbGw6ICMyMjI7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0NCiAgICAudGljay1sYWJlbCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzQ0NDsgfQ0KICAgIC5sZWdlbmQtdGV4dCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzIyMjsgfQ0KICAgIC5ncmlkLWxpbmUgeyBzdHJva2U6ICNlMGUwZTA7IHN0cm9rZS13aWR0aDogMC44OyBzdHJva2UtZGFzaGFycmF5OiAzLDM7IH0NCiAgICAuYXhpcy1saW5lIHsgc3Ryb2tlOiAjMzMzOyBzdHJva2Utd2lkdGg6IDEuMjsgfQ0KICA8L3N0eWxlPg0KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiAvPg0KPHRleHQgeD0iMjcwLjAiIHk9IjMwIiBjbGFzcz0idGl0bGUiPkZpZy4gNS4gQ2xhc3NpZmljYXRpb24gUGVyZm9ybWFuY2UgU2Vuc2l0aXZpdHkgQWNyb3NzIEltcG9ydGFuY2UgVGhyZXNob2xkczwvdGV4dD48bGluZSB4MT0iNTUiIHkxPSIzMjUuMCIgeDI9IjUxMCIgeTI9IjMyNS4wIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjQ3IiB5PSIzMjkuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuMDwvdGV4dD48bGluZSB4MT0iNTUiIHkxPSIyNzAuMCIgeDI9IjUxMCIgeTI9IjI3MC4wIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjQ3IiB5PSIyNzQuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuMjwvdGV4dD48bGluZSB4MT0iNTUiIHkxPSIyMTUuMCIgeDI9IjUxMCIgeTI9IjIxNS4wIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjQ3IiB5PSIyMTkuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuNDwvdGV4dD48bGluZSB4MT0iNTUiIHkxPSIxNTkuOTk5OTk5OTk5OTk5OTciIHgyPSI1MTAiIHkyPSIxNTkuOTk5OTk5OTk5OTk5OTciIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNDciIHk9IjE2My45OTk5OTk5OTk5OTk5NyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuNjwvdGV4dD48bGluZSB4MT0iNTUiIHkxPSIxMDQuOTk5OTk5OTk5OTk5OTkiIHgyPSI1MTAiIHkyPSIxMDQuOTk5OTk5OTk5OTk5OTkiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNDciIHk9IjEwOC45OTk5OTk5OTk5OTk5OSIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuODwvdGV4dD48bGluZSB4MT0iNTUiIHkxPSI1MC4wIiB4Mj0iNTEwIiB5Mj0iNTAuMCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI0NyIgeT0iNTQuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjEuMDwvdGV4dD48bGluZSB4MT0iNTUuMCIgeTE9IjUwIiB4Mj0iNTUuMCIgeTI9IjMyNSIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI1NS4wIiB5PSIzNDMiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4wLjE8L3RleHQ+PGxpbmUgeDE9IjEwOC41Mjk0MTE3NjQ3MDU4OCIgeTE9IjUwIiB4Mj0iMTA4LjUyOTQxMTc2NDcwNTg4IiB5Mj0iMzI1IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjEwOC41Mjk0MTE3NjQ3MDU4OCIgeT0iMzQzIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4yPC90ZXh0PjxsaW5lIHgxPSIxNjIuMDU4ODIzNTI5NDExNzciIHkxPSI1MCIgeDI9IjE2Mi4wNTg4MjM1Mjk0MTE3NyIgeTI9IjMyNSIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIxNjIuMDU4ODIzNTI5NDExNzciIHk9IjM0MyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjAuMzwvdGV4dD48bGluZSB4MT0iMjE1LjU4ODIzNTI5NDExNzY4IiB5MT0iNTAiIHgyPSIyMTUuNTg4MjM1Mjk0MTE3NjgiIHkyPSIzMjUiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iMjE1LjU4ODIzNTI5NDExNzY4IiB5PSIzNDMiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4wLjQ8L3RleHQ+PGxpbmUgeDE9IjI2OS4xMTc2NDcwNTg4MjM1NCIgeTE9IjUwIiB4Mj0iMjY5LjExNzY0NzA1ODgyMzU0IiB5Mj0iMzI1IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjI2OS4xMTc2NDcwNTg4MjM1NCIgeT0iMzQzIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC41PC90ZXh0PjxsaW5lIHgxPSIzMjIuNjQ3MDU4ODIzNTI5NDUiIHkxPSI1MCIgeDI9IjMyMi42NDcwNTg4MjM1Mjk0NSIgeTI9IjMyNSIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIzMjIuNjQ3MDU4ODIzNTI5NDUiIHk9IjM0MyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjAuNjwvdGV4dD48bGluZSB4MT0iMzc2LjE3NjQ3MDU4ODIzNTM2IiB5MT0iNTAiIHgyPSIzNzYuMTc2NDcwNTg4MjM1MzYiIHkyPSIzMjUiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iMzc2LjE3NjQ3MDU4ODIzNTM2IiB5PSIzNDMiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4wLjc8L3RleHQ+PGxpbmUgeDE9IjQyOS43MDU4ODIzNTI5NDEyIiB5MT0iNTAiIHgyPSI0MjkuNzA1ODgyMzUyOTQxMiIgeTI9IjMyNSIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI0MjkuNzA1ODgyMzUyOTQxMiIgeT0iMzQzIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC44PC90ZXh0PjxsaW5lIHgxPSI0ODMuMjM1Mjk0MTE3NjQ3MTMiIHkxPSI1MCIgeDI9IjQ4My4yMzUyOTQxMTc2NDcxMyIgeTI9IjMyNSIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI0ODMuMjM1Mjk0MTE3NjQ3MTMiIHk9IjM0MyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjAuOTwvdGV4dD48cmVjdCB4PSI1NSIgeT0iNTAiIHdpZHRoPSI0NTUiIGhlaWdodD0iMjc1IiBmaWxsPSJub25lIiBjbGFzcz0iYXhpcy1saW5lIiAvPjxwYXRoIGQ9Ik0gNTUuMCA1MC4wIEwgODEuOCA1MC4wIEwgMTA4LjUgNTAuMCBMIDEzNS4zIDUxLjEgTCAxNjIuMSA1MS4xIEwgMTg4LjggNTEuMSBMIDIxNS42IDUxLjEgTCAyNDIuNCA1MS4xIEwgMjY5LjEgNTEuNyBMIDI5NS45IDUxLjcgTCAzMjIuNiA1MS43IEwgMzQ5LjQgNTIuOCBMIDM3Ni4yIDUzLjQgTCA0MDIuOSA1My45IEwgNDI5LjcgNjAuOSBMIDQ1Ni41IDEwOS43IEwgNDgzLjIgMjkzLjQgTCA1MTAuMCAzMjUuMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMTU2NWMwIiBzdHJva2Utd2lkdGg9IjIuMCIgc3Ryb2tlLWRhc2hhcnJheT0ibm9uZSIgLz48Y2lyY2xlIGN4PSI1NS4wIiBjeT0iNTAuMCIgcj0iMy41IiBmaWxsPSIjMTU2NWMwIiAvPjxjaXJjbGUgY3g9IjgxLjgiIGN5PSI1MC4wIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMTA4LjUiIGN5PSI1MC4wIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMTM1LjMiIGN5PSI1MS4xIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMTYyLjEiIGN5PSI1MS4xIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMTg4LjgiIGN5PSI1MS4xIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMjE1LjYiIGN5PSI1MS4xIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMjQyLjQiIGN5PSI1MS4xIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMjY5LjEiIGN5PSI1MS43IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMjk1LjkiIGN5PSI1MS43IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMzIyLjYiIGN5PSI1MS43IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMzQ5LjQiIGN5PSI1Mi44IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iMzc2LjIiIGN5PSI1My40IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iNDAyLjkiIGN5PSI1My45IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iNDI5LjciIGN5PSI2MC45IiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PGNpcmNsZSBjeD0iNDU2LjUiIGN5PSIxMDkuNyIgcj0iMy41IiBmaWxsPSIjMTU2NWMwIiAvPjxjaXJjbGUgY3g9IjQ4My4yIiBjeT0iMjkzLjQiIHI9IjMuNSIgZmlsbD0iIzE1NjVjMCIgLz48Y2lyY2xlIGN4PSI1MTAuMCIgY3k9IjMyNS4wIiByPSIzLjUiIGZpbGw9IiMxNTY1YzAiIC8+PHBhdGggZD0iTSA1NS4wIDUwLjAgTCA4MS44IDUwLjAgTCAxMDguNSA1MC4wIEwgMTM1LjMgNTAuMCBMIDE2Mi4xIDUwLjAgTCAxODguOCA1MC4wIEwgMjE1LjYgNTAuMCBMIDI0Mi40IDUwLjAgTCAyNjkuMSA1MC4wIEwgMjk1LjkgNTAuMCBMIDMyMi42IDUwLjAgTCAzNDkuNCA1MC4wIEwgMzc2LjIgNTAuMCBMIDQwMi45IDUwLjAgTCA0MjkuNyA2MC40IEwgNDU2LjUgMTI4LjYgTCA0ODMuMiAyMzkuMSBMIDUxMC4wIDMyNS4wIiBmaWxsPSJub25lIiBzdHJva2U9IiMyZTdkMzIiIHN0cm9rZS13aWR0aD0iMi4wIiBzdHJva2UtZGFzaGFycmF5PSI0LDMiIC8+PHJlY3QgeD0iNTIuMCIgeT0iNDcuMCIgd2lkdGg9IjYiIGhlaWdodD0iNiIgZmlsbD0iIzJlN2QzMiIgLz48cmVjdCB4PSI3OC44IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjEwNS41IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjEzMi4zIiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjE1OS4xIiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjE4NS44IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjIxMi42IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjIzOS40IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjI2Ni4xIiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjI5Mi45IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjMxOS42IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjM0Ni40IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjM3My4yIiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjM5OS45IiB5PSI0Ny4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjQyNi43IiB5PSI1Ny40IiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxyZWN0IHg9IjQ1My41IiB5PSIxMjUuNiIgd2lkdGg9IjYiIGhlaWdodD0iNiIgZmlsbD0iIzJlN2QzMiIgLz48cmVjdCB4PSI0ODAuMiIgeT0iMjM2LjEiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiIGZpbGw9IiMyZTdkMzIiIC8+PHJlY3QgeD0iNTA3LjAiIHk9IjMyMi4wIiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjMmU3ZDMyIiAvPjxwYXRoIGQ9Ik0gNTUuMCA1MC4wIEwgODEuOCA1MC4wIEwgMTA4LjUgNTAuMCBMIDEzNS4zIDUyLjIgTCAxNjIuMSA1Mi4yIEwgMTg4LjggNTIuMiBMIDIxNS42IDUyLjIgTCAyNDIuNCA1Mi4yIEwgMjY5LjEgNTMuMyBMIDI5NS45IDUzLjMgTCAzMjIuNiA1My4zIEwgMzQ5LjQgNTUuNSBMIDM3Ni4yIDU2LjYgTCA0MDIuOSA1Ny43IEwgNDI5LjcgNjEuNSBMIDQ1Ni41IDg2LjkgTCA0ODMuMiAzMDUuNiBMIDUxMC4wIDMyNS4wIiBmaWxsPSJub25lIiBzdHJva2U9IiNjNjI4MjgiIHN0cm9rZS13aWR0aD0iMi4wIiBzdHJva2UtZGFzaGFycmF5PSIyLDIiIC8+PHBvbHlnb24gcG9pbnRzPSI1NS4wLDQ2LjAgNTEuNSw1My4wIDU4LjUsNTMuMCIgZmlsbD0iI2M2MjgyOCIgLz48cG9seWdvbiBwb2ludHM9IjgxLjc2NDcwNTg4MjM1MjkzLDQ2LjAgNzguMjY0NzA1ODgyMzUyOTMsNTMuMCA4NS4yNjQ3MDU4ODIzNTI5Myw1My4wIiBmaWxsPSIjYzYyODI4IiAvPjxwb2x5Z29uIHBvaW50cz0iMTA4LjUyOTQxMTc2NDcwNTg4LDQ2LjAgMTA1LjAyOTQxMTc2NDcwNTg4LDUzLjAgMTEyLjAyOTQxMTc2NDcwNTg4LDUzLjAiIGZpbGw9IiNjNjI4MjgiIC8+PHBvbHlnb24gcG9pbnRzPSIxMzUuMjk0MTE3NjQ3MDU4ODQsNDguMiAxMzEuNzk0MTE3NjQ3MDU4ODQsNTUuMiAxMzguNzk0MTE3NjQ3MDU4ODQsNTUuMiIgZmlsbD0iI2M2MjgyOCIgLz48cG9seWdvbiBwb2ludHM9IjE2Mi4wNTg4MjM1Mjk0MTE3Nyw0OC4yIDE1OC41NTg4MjM1Mjk0MTE3Nyw1NS4yIDE2NS41NTg4MjM1Mjk0MTE3Nyw1NS4yIiBmaWxsPSIjYzYyODI4IiAvPjxwb2x5Z29uIHBvaW50cz0iMTg4LjgyMzUyOTQxMTc2NDcsNDguMiAxODUuMzIzNTI5NDExNzY0Nyw1NS4yIDE5Mi4zMjM1Mjk0MTE3NjQ3LDU1LjIiIGZpbGw9IiNjNjI4MjgiIC8+PHBvbHlnb24gcG9pbnRzPSIyMTUuNTg4MjM1Mjk0MTE3NjgsNDguMiAyMTIuMDg4MjM1Mjk0MTE3NjgsNTUuMiAyMTkuMDg4MjM1Mjk0MTE3NjgsNTUuMiIgZmlsbD0iI2M2MjgyOCIgLz48cG9seWdvbiBwb2ludHM9IjI0Mi4zNTI5NDExNzY0NzA1OCw0OC4yIDIzOC44NTI5NDExNzY0NzA1OCw1NS4yIDI0NS44NTI5NDExNzY0NzA1OCw1NS4yIiBmaWxsPSIjYzYyODI4IiAvPjxwb2x5Z29uIHBvaW50cz0iMjY5LjExNzY0NzA1ODgyMzU0LDQ5LjMwMDAwMDAwMDAwMDAwNCAyNjUuNjE3NjQ3MDU4ODIzNTQsNTYuMzAwMDAwMDAwMDAwMDA0IDI3Mi42MTc2NDcwNTg4MjM1NCw1Ni4zMDAwMDAwMDAwMDAwMDQiIGZpbGw9IiNjNjI4MjgiIC8+PHBvbHlnb24gcG9pbnRzPSIyOTUuODgyMzUyOTQxMTc2NSw0OS4zMDAwMDAwMDAwMDAwMDQgMjkyLjM4MjM1Mjk0MTE3NjUsNTYuMzAwMDAwMDAwMDAwMDA0IDI5OS4zODIzNTI5NDExNzY1LDU2LjMwMDAwMDAwMDAwMDAwNCIgZmlsbD0iI2M2MjgyOCIgLz48cG9seWdvbiBwb2ludHM9IjMyMi42NDcwNTg4MjM1Mjk0NSw0OS4zMDAwMDAwMDAwMDAwMDQgMzE5LjE0NzA1ODgyMzUyOTQ1LDU2LjMwMDAwMDAwMDAwMDAwNCAzMjYuMTQ3MDU4ODIzNTI5NDUsNTYuMzAwMDAwMDAwMDAwMDA0IiBmaWxsPSIjYzYyODI4IiAvPjxwb2x5Z29uIHBvaW50cz0iMzQ5LjQxMTc2NDcwNTg4MjQsNTEuNTI3NSAzNDUuOTExNzY0NzA1ODgyNCw1OC41Mjc1IDM1Mi45MTE3NjQ3MDU4ODI0LDU4LjUyNzUiIGZpbGw9IiNjNjI4MjgiIC8+PHBvbHlnb24gcG9pbnRzPSIzNzYuMTc2NDcwNTg4MjM1Myw1Mi42Mjc1MDAwMDAwMDAwMDUgMzcyLjY3NjQ3MDU4ODIzNTMsNTkuNjI3NTAwMDAwMDAwMDA1IDM3OS42NzY0NzA1ODgyMzUzLDU5LjYyNzUwMDAwMDAwMDAwNSIgZmlsbD0iI2M2MjgyOCIgLz48cG9seWdvbiBwb2ludHM9IjQwMi45NDExNzY0NzA1ODgzLDUzLjcyNzUwMDAwMDAwMDAwNiAzOTkuNDQxMTc2NDcwNTg4Myw2MC43Mjc1MDAwMDAwMDAwMDYgNDA2LjQ0MTE3NjQ3MDU4ODMsNjAuNzI3NTAwMDAwMDAwMDA2IiBmaWxsPSIjYzYyODI4IiAvPjxwb2x5Z29uIHBvaW50cz0iNDI5LjcwNTg4MjM1Mjk0MTIsNTcuNDY3NDk5OTk5OTk5OTkgNDI2LjIwNTg4MjM1Mjk0MTIsNjQuNDY3NDk5OTk5OTk5OTkgNDMzLjIwNTg4MjM1Mjk0MTIsNjQuNDY3NDk5OTk5OTk5OTkiIGZpbGw9IiNjNjI4MjgiIC8+PHBvbHlnb24gcG9pbnRzPSI0NTYuNDcwNTg4MjM1Mjk0MSw4Mi44Nzc1IDQ1Mi45NzA1ODgyMzUyOTQxLDg5Ljg3NzUgNDU5Ljk3MDU4ODIzNTI5NDEsODkuODc3NSIgZmlsbD0iI2M2MjgyOCIgLz48cG9seWdvbiBwb2ludHM9IjQ4My4yMzUyOTQxMTc2NDcxMywzMDEuNjQgNDc5LjczNTI5NDExNzY0NzEzLDMwOC42NCA0ODYuNzM1Mjk0MTE3NjQ3MTMsMzA4LjY0IiBmaWxsPSIjYzYyODI4IiAvPjxwb2x5Z29uIHBvaW50cz0iNTEwLjAsMzIxLjAgNTA2LjUsMzI4LjAgNTEzLjUsMzI4LjAiIGZpbGw9IiNjNjI4MjgiIC8+PHJlY3QgeD0iODAiIHk9IjI0MCIgd2lkdGg9IjE0MCIgaGVpZ2h0PSI3MCIgcng9IjQiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2NjYyIgc3Ryb2tlLXdpZHRoPSIwLjgiIC8+PGNpcmNsZSBjeD0iOTgiIGN5PSIyNTYiIHI9IjMuNSIgZmlsbD0iIzE1NjVjMCIgLz48bGluZSB4MT0iODgiIHkxPSIyNTYiIHgyPSIxMDgiIHkyPSIyNTYiIHN0cm9rZT0iIzE1NjVjMCIgc3Ryb2tlLXdpZHRoPSIxLjgiIC8+PHRleHQgeD0iMTE2IiB5PSIyNjAiIGNsYXNzPSJsZWdlbmQtdGV4dCI+RjEtU2NvcmUgKFBlYWs6IDEuMDApPC90ZXh0PjxyZWN0IHg9Ijk1IiB5PSIyNzIiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiIGZpbGw9IiMyZTdkMzIiIC8+PGxpbmUgeDE9Ijg4IiB5MT0iMjc1IiB4Mj0iMTA4IiB5Mj0iMjc1IiBzdHJva2U9IiMyZTdkMzIiIHN0cm9rZS13aWR0aD0iMS44IiBzdHJva2UtZGFzaGFycmF5PSI0LDMiIC8+PHRleHQgeD0iMTE2IiB5PSIyNzkiIGNsYXNzPSJsZWdlbmQtdGV4dCI+UHJlY2lzaW9uPC90ZXh0Pjxwb2x5Z29uIHBvaW50cz0iOTgsMjg4IDk1LDI5NSAxMDEsMjk1IiBmaWxsPSIjYzYyODI4IiAvPjxsaW5lIHgxPSI4OCIgeTE9IjI5MyIgeDI9IjEwOCIgeTI9IjI5MyIgc3Ryb2tlPSIjYzYyODI4IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWRhc2hhcnJheT0iMiwyIiAvPjx0ZXh0IHg9IjExNiIgeT0iMjk3IiBjbGFzcz0ibGVnZW5kLXRleHQiPlJlY2FsbDwvdGV4dD48dGV4dCB4PSIyODIuNSIgeT0iMzY1IiBjbGFzcz0iYXhpcy1sYWJlbCI+SW1wb3J0YW5jZSBCaW5hcml6YXRpb24gVGhyZXNob2xkPC90ZXh0Pjx0ZXh0IHg9IjE4IiB5PSIxODcuNSIgY2xhc3M9ImF4aXMtbGFiZWwiIHRyYW5zZm9ybT0icm90YXRlKC05MCAxOCAxODcuNSkiPk1ldHJpYyBWYWx1ZSDiiIggWzAsIDFdPC90ZXh0Pjwvc3ZnPg0K" alt="Figure 5" class="vector-figure" />
+          </div>
+          <div class="figure-caption">
+            <strong>Figure 5:</strong> <em>Precision-Recall and Binary F1 Sensitivity</em> &mdash; Metric response across classification thresholds theta in [0.1, 0.9], highlighting the sharp drop above theta > 0.85.
+          </div>
+        </div>
+         ([<code>fig3_ablation.svg</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/figures/fig3_ablation.svg)).
+
+<div class="table-caption">TABLE III: Modality Ablation Results on Test Set</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Configuration</th>
+  <th>Visual Input (512-dim)</th>
+  <th>Text Input (384-dim)</th>
+  <th>MSE Loss</th>
+  <th>Pearson <span class="inline-math"><em>r</em></span></th>
+  <th>Pred Mean</th>
+  <th>Pred Std</th>
+  <th>Binary F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Multimodal (Full)</strong></td>
+  <td>Active</td>
+  <td>Active</td>
+  <td><strong>0.007335</strong></td>
+  <td>-0.0506</td>
+  <td>0.8668</td>
+  <td>0.0712</td>
+  <td><strong>0.9939</strong></td>
+</tr>
+<tr>
+  <td><strong>Visual-Only</strong></td>
+  <td>Active</td>
+  <td>Zeroed</td>
+  <td>0.042302</td>
+  <td>-0.1034</td>
+  <td>0.7302</td>
+  <td>0.1684</td>
+  <td>0.9168</td>
+</tr>
+<tr>
+  <td><strong>Text-Only</strong></td>
+  <td>Zeroed</td>
+  <td>Active</td>
+  <td>0.033519</td>
+  <td><strong>-0.0064</strong></td>
+  <td>0.7495</td>
+  <td>0.1533</td>
+  <td>0.9399</td>
+</tr>
+<tr>
+  <td><strong>Zero Baseline (Ablated)</strong></td>
+  <td>Zeroed</td>
+  <td>Zeroed</td>
+  <td>0.758825</td>
+  <td>+0.0182</td>
+  <td>0.0041</td>
+  <td>0.0061</td>
+  <td>0.0000</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3 class="subsection-title">Key Ablation Insights:</h3>
+1. <strong>Multimodal Synergy:</strong> Fusing both modalities yields the lowest MSE (<span class="inline-math"><em>0.0073</em></span>). Removing either visual or text features increases error by <strong><span class="inline-math"><em>5.7\times</em></span></strong> and <strong><span class="inline-math"><em>4.6\times</em></span></strong>, respectively.
+2. <strong>Text Dominance Over Visual:</strong> Text-only features achieve a lower error (<span class="inline-math"><em>0.0335</em></span>) than visual-only features (<span class="inline-math"><em>0.0423</em></span>), indicating the fusion MLP places greater reliance on the SentenceTransformer projection.
+3. <strong>Catastrophic Failure Without Input:</strong> When both inputs are ablated, output scores collapse to near-zero (<span class="inline-math"><em>0.0041</em></span>), resulting in an MSE of <span class="inline-math"><em>0.7588</em></span> and <span class="inline-math"><em>F_1 = 0.0000</em></span>. This confirms the model does not merely output a hardcoded bias.
+
+---
+
+<h2 class="section-title">6. Cross-Split Generalization Analysis</h2>
+
+To test for overfitting, the trained model was evaluated across all three partitions (Table IV, Figure 4, and Figure 6).
+
+        <div class="figure-card">
+          <div class="figure-img-wrap">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NjAgMzYwIiB3aWR0aD0iNTYwIiBoZWlnaHQ9IjM2MCI+DQogIDxzdHlsZT4NCiAgICB0ZXh0IHsgZm9udC1mYW1pbHk6ICJUaW1lcyBOZXcgUm9tYW4iLCBUaW1lcywgc2VyaWY7IH0NCiAgICAudGl0bGUgeyBmb250LXNpemU6IDE1cHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBmaWxsOiAjMTExOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9DQogICAgLmF4aXMtbGFiZWwgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiBub3JtYWw7IGZpbGw6ICMyMjI7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0NCiAgICAudGljay1sYWJlbCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzQ0NDsgfQ0KICAgIC5sZWdlbmQtdGV4dCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzIyMjsgfQ0KICAgIC5ncmlkLWxpbmUgeyBzdHJva2U6ICNlMGUwZTA7IHN0cm9rZS13aWR0aDogMC44OyBzdHJva2UtZGFzaGFycmF5OiAzLDM7IH0NCiAgICAuYXhpcy1saW5lIHsgc3Ryb2tlOiAjMzMzOyBzdHJva2Utd2lkdGg6IDEuMjsgfQ0KICA8L3N0eWxlPg0KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiAvPg0KPHRleHQgeD0iMjgwLjAiIHk9IjMyIiBjbGFzcz0idGl0bGUiPkZpZy4gNC4gQ3Jvc3MtU3BsaXQgRXZhbHVhdGlvbjogVHJhaW5pbmcsIFZhbGlkYXRpb24sIGFuZCBUZXN0IEdlbmVyYWxpemF0aW9uPC90ZXh0PjxsaW5lIHgxPSI2NSIgeTE9IjMwMC4wIiB4Mj0iNTM1IiB5Mj0iMzAwLjAiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTciIHk9IjMwNC4wIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+MC4wMDA8L3RleHQ+PGxpbmUgeDE9IjY1IiB5MT0iMjQ1LjU1NTU1NTU1NTU1NTU3IiB4Mj0iNTM1IiB5Mj0iMjQ1LjU1NTU1NTU1NTU1NTU3IiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjU3IiB5PSIyNDkuNTU1NTU1NTU1NTU1NTciIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjAwMjwvdGV4dD48bGluZSB4MT0iNjUiIHkxPSIxOTEuMTExMTExMTExMTExMTEiIHgyPSI1MzUiIHkyPSIxOTEuMTExMTExMTExMTExMTEiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTciIHk9IjE5NS4xMTExMTExMTExMTExMSIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPjAuMDA0PC90ZXh0PjxsaW5lIHgxPSI2NSIgeTE9IjEzNi42NjY2NjY2NjY2NjY2MyIgeDI9IjUzNSIgeTI9IjEzNi42NjY2NjY2NjY2NjY2MyIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI1NyIgeT0iMTQwLjY2NjY2NjY2NjY2NjYzIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+MC4wMDY8L3RleHQ+PGxpbmUgeDE9IjY1IiB5MT0iODIuMjIyMjIyMjIyMjIyMiIgeDI9IjUzNSIgeTI9IjgyLjIyMjIyMjIyMjIyMjIiIGNsYXNzPSJncmlkLWxpbmUiIC8+PHRleHQgeD0iNTciIHk9Ijg2LjIyMjIyMjIyMjIyMjIiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj4wLjAwODwvdGV4dD48dGV4dCB4PSI1NDMiIHk9IjI4MS43MjcyNzI3MjcyNzI3NSIgY2xhc3M9InRpY2stbGFiZWwiIGZpbGw9IiMxOTc2ZDIiPi0wLjE8L3RleHQ+PHRleHQgeD0iNTQzIiB5PSIyMzcuMTgxODE4MTgxODE4MiIgY2xhc3M9InRpY2stbGFiZWwiIGZpbGw9IiMxOTc2ZDIiPjAuMDwvdGV4dD48dGV4dCB4PSI1NDMiIHk9IjE5Mi42MzYzNjM2MzYzNjM2MyIgY2xhc3M9InRpY2stbGFiZWwiIGZpbGw9IiMxOTc2ZDIiPjAuMTwvdGV4dD48dGV4dCB4PSI1NDMiIHk9IjE0OC4wOTA5MDkwOTA5MDkxIiBjbGFzcz0idGljay1sYWJlbCIgZmlsbD0iIzE5NzZkMiI+MC4yPC90ZXh0Pjx0ZXh0IHg9IjU0MyIgeT0iMTAzLjU0NTQ1NDU0NTQ1NDUzIiBjbGFzcz0idGljay1sYWJlbCIgZmlsbD0iIzE5NzZkMiI+MC4zPC90ZXh0Pjx0ZXh0IHg9IjU0MyIgeT0iNTkuMCIgY2xhc3M9InRpY2stbGFiZWwiIGZpbGw9IiMxOTc2ZDIiPjAuNDwvdGV4dD48cmVjdCB4PSI2NSIgeT0iNTUiIHdpZHRoPSI0NzAiIGhlaWdodD0iMjQ1IiBmaWxsPSJub25lIiBjbGFzcz0iYXhpcy1saW5lIiAvPjxyZWN0IHg9IjEwOC4xIiB5PSIyNDIuOCIgd2lkdGg9IjcwLjUiIGhlaWdodD0iNTcuMiIgZmlsbD0iIzc4OTA5YyIgc3Ryb2tlPSIjMzc0NzRmIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48dGV4dCB4PSIxNDMuMyIgeT0iMjM2LjgiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMxMTE7IGZvbnQtd2VpZ2h0OmJvbGQ7IHRleHQtYW5jaG9yOm1pZGRsZTsiPk1TRTogMC4wMDIxPC90ZXh0Pjx0ZXh0IHg9IjE0My4zIiB5PSIzMjAiIGNsYXNzPSJheGlzLWxhYmVsIj5UcmFpbmluZyBTcGxpdCAoNTIgdmlkcyk8L3RleHQ+PHJlY3QgeD0iMjY0LjgiIHk9IjE5Ny45IiB3aWR0aD0iNzAuNSIgaGVpZ2h0PSIxMDIuMSIgZmlsbD0iIzc4OTA5YyIgc3Ryb2tlPSIjMzc0NzRmIiBzdHJva2Utd2lkdGg9IjAuOCIgLz48dGV4dCB4PSIzMDAuMCIgeT0iMTkxLjkiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMxMTE7IGZvbnQtd2VpZ2h0OmJvbGQ7IHRleHQtYW5jaG9yOm1pZGRsZTsiPk1TRTogMC4wMDM4PC90ZXh0Pjx0ZXh0IHg9IjMwMC4wIiB5PSIzMjAiIGNsYXNzPSJheGlzLWxhYmVsIj5WYWxpZGF0aW9uIFNwbGl0ICgxMSB2aWRzKTwvdGV4dD48cmVjdCB4PSI0MjEuNCIgeT0iMTAwLjMiIHdpZHRoPSI3MC41IiBoZWlnaHQ9IjE5OS43IiBmaWxsPSIjNzg5MDljIiBzdHJva2U9IiMzNzQ3NGYiIHN0cm9rZS13aWR0aD0iMC44IiAvPjx0ZXh0IHg9IjQ1Ni43IiB5PSI5NC4zIiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMTExOyBmb250LXdlaWdodDpib2xkOyB0ZXh0LWFuY2hvcjptaWRkbGU7Ij5NU0U6IDAuMDA3MzwvdGV4dD48dGV4dCB4PSI0NTYuNyIgeT0iMzIwIiBjbGFzcz0iYXhpcy1sYWJlbCI+VGVzdCBTcGxpdCAoMTIgdmlkcyk8L3RleHQ+PGxpbmUgeDE9IjE0My4zMzMzMzMzMzMzMzMzMSIgeTE9Ijk5LjEwMDAwMDAwMDAwMDA0IiB4Mj0iMzAwLjAiIHkyPSIyNTguNTcyNzI3MjcyNzI3MyIgc3Ryb2tlPSIjMDI3N2JkIiBzdHJva2Utd2lkdGg9IjIuMiIgc3Ryb2tlLWRhc2hhcnJheT0iNCwyIiAvPjxsaW5lIHgxPSIzMDAuMCIgeTE9IjI1OC41NzI3MjcyNzI3MjczIiB4Mj0iNDU2LjY2NjY2NjY2NjY2NjYzIiB5Mj0iMjU1LjcyMTgxODE4MTgxODIiIHN0cm9rZT0iIzAyNzdiZCIgc3Ryb2tlLXdpZHRoPSIyLjIiIHN0cm9rZS1kYXNoYXJyYXk9IjQsMiIgLz48Y2lyY2xlIGN4PSIxNDMuMzMzMzMzMzMzMzMzMzEiIGN5PSI5OS4xMDAwMDAwMDAwMDAwNCIgcj0iNSIgZmlsbD0iIzAyNzdiZCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIgLz48dGV4dCB4PSIxNDMuMzMzMzMzMzMzMzMzMzEiIHk9Ijg5LjEwMDAwMDAwMDAwMDA0IiBzdHlsZT0iZm9udC1zaXplOjEwcHg7IGZpbGw6IzAxNTc5YjsgZm9udC13ZWlnaHQ6Ym9sZDsgdGV4dC1hbmNob3I6bWlkZGxlOyI+ciA9IDAuMzAxMDwvdGV4dD48Y2lyY2xlIGN4PSIzMDAuMCIgY3k9IjI1OC41NzI3MjcyNzI3MjczIiByPSI1IiBmaWxsPSIjMDI3N2JkIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS41IiAvPjx0ZXh0IHg9IjMwMC4wIiB5PSIyNDguNTcyNzI3MjcyNzI3MzIiIHN0eWxlPSJmb250LXNpemU6MTBweDsgZmlsbDojMDE1NzliOyBmb250LXdlaWdodDpib2xkOyB0ZXh0LWFuY2hvcjptaWRkbGU7Ij5yID0gLTAuMDU3MDwvdGV4dD48Y2lyY2xlIGN4PSI0NTYuNjY2NjY2NjY2NjY2NjMiIGN5PSIyNTUuNzIxODE4MTgxODE4MiIgcj0iNSIgZmlsbD0iIzAyNzdiZCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIgLz48dGV4dCB4PSI0NTYuNjY2NjY2NjY2NjY2NjMiIHk9IjI0NS43MjE4MTgxODE4MTgyIiBzdHlsZT0iZm9udC1zaXplOjEwcHg7IGZpbGw6IzAxNTc5YjsgZm9udC13ZWlnaHQ6Ym9sZDsgdGV4dC1hbmNob3I6bWlkZGxlOyI+ciA9IC0wLjA1MDY8L3RleHQ+PHRleHQgeD0iMjAiIHk9IjE3Ny41IiBjbGFzcz0iYXhpcy1sYWJlbCIgdHJhbnNmb3JtPSJyb3RhdGUoLTkwIDIwIDE3Ny41KSI+TVNFIExvc3MgKEJhcnMpPC90ZXh0Pjx0ZXh0IHg9IjU0OCIgeT0iMTc3LjUiIGNsYXNzPSJheGlzLWxhYmVsIiBmaWxsPSIjMDI3N2JkIiB0cmFuc2Zvcm09InJvdGF0ZSg5MCA1NDggMTc3LjUpIj5QZWFyc29uIHIgKExpbmUpPC90ZXh0Pjwvc3ZnPg0K" alt="Figure 4" class="vector-figure" />
+          </div>
+          <div class="figure-caption">
+            <strong>Figure 4:</strong> <em>Cross-Split Generalization Profile</em> &mdash; Training, validation, and test set performance showing overfitting to synthetic sequence artifacts.
+          </div>
+        </div>
+        
+
+        <div class="figure-card">
+          <div class="figure-img-wrap">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1ODAgNDIwIiB3aWR0aD0iNTgwIiBoZWlnaHQ9IjQyMCI+DQogIDxzdHlsZT4NCiAgICB0ZXh0IHsgZm9udC1mYW1pbHk6ICJUaW1lcyBOZXcgUm9tYW4iLCBUaW1lcywgc2VyaWY7IH0NCiAgICAudGl0bGUgeyBmb250LXNpemU6IDE1cHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBmaWxsOiAjMTExOyB0ZXh0LWFuY2hvcjogbWlkZGxlOyB9DQogICAgLmF4aXMtbGFiZWwgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiBub3JtYWw7IGZpbGw6ICMyMjI7IHRleHQtYW5jaG9yOiBtaWRkbGU7IH0NCiAgICAudGljay1sYWJlbCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzQ0NDsgfQ0KICAgIC5sZWdlbmQtdGV4dCB7IGZvbnQtc2l6ZTogMTBweDsgZmlsbDogIzIyMjsgfQ0KICAgIC5ncmlkLWxpbmUgeyBzdHJva2U6ICNlMGUwZTA7IHN0cm9rZS13aWR0aDogMC44OyBzdHJva2UtZGFzaGFycmF5OiAzLDM7IH0NCiAgICAuYXhpcy1saW5lIHsgc3Ryb2tlOiAjMzMzOyBzdHJva2Utd2lkdGg6IDEuMjsgfQ0KICA8L3N0eWxlPg0KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmZmZmIiAvPg0KPHRleHQgeD0iMjkwLjAiIHk9IjMwIiBjbGFzcz0idGl0bGUiPkZpZy4gNi4gU2VnbWVudC1MZXZlbCBFcnJvciBBY3Jvc3MgMTIgSW5kZXBlbmRlbnQgVGVzdCBWaWRlb3M8L3RleHQ+PGxpbmUgeDE9IjExMC4wIiB5MT0iNTAiIHgyPSIxMTAuMCIgeTI9IjM3MCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIxMTAuMCIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMDA8L3RleHQ+PGxpbmUgeDE9IjE1Ny4yMzk4NzMwODk1MzE2NyIgeTE9IjUwIiB4Mj0iMTU3LjIzOTg3MzA4OTUzMTY3IiB5Mj0iMzcwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjE1Ny4yMzk4NzMwODk1MzE2NyIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMDU8L3RleHQ+PGxpbmUgeDE9IjIwNC40Nzk3NDYxNzkwNjMzIiB5MT0iNTAiIHgyPSIyMDQuNDc5NzQ2MTc5MDYzMyIgeTI9IjM3MCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIyMDQuNDc5NzQ2MTc5MDYzMyIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMTA8L3RleHQ+PGxpbmUgeDE9IjI1MS43MTk2MTkyNjg1OTQ5MyIgeTE9IjUwIiB4Mj0iMjUxLjcxOTYxOTI2ODU5NDkzIiB5Mj0iMzcwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjI1MS43MTk2MTkyNjg1OTQ5MyIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMTU8L3RleHQ+PGxpbmUgeDE9IjI5OC45NTk0OTIzNTgxMjY2IiB5MT0iNTAiIHgyPSIyOTguOTU5NDkyMzU4MTI2NiIgeTI9IjM3MCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSIyOTguOTU5NDkyMzU4MTI2NiIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMjA8L3RleHQ+PGxpbmUgeDE9IjM0Ni4xOTkzNjU0NDc2NTgyNCIgeTE9IjUwIiB4Mj0iMzQ2LjE5OTM2NTQ0NzY1ODI0IiB5Mj0iMzcwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjM0Ni4xOTkzNjU0NDc2NTgyNCIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMjU8L3RleHQ+PGxpbmUgeDE9IjM5My40MzkyMzg1MzcxODk4NSIgeTE9IjUwIiB4Mj0iMzkzLjQzOTIzODUzNzE4OTg1IiB5Mj0iMzcwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjM5My40MzkyMzg1MzcxODk4NSIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMzA8L3RleHQ+PGxpbmUgeDE9IjQ0MC42NzkxMTE2MjY3MjE2IiB5MT0iNTAiIHgyPSI0NDAuNjc5MTExNjI2NzIxNiIgeTI9IjM3MCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI0NDAuNjc5MTExNjI2NzIxNiIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wMzU8L3RleHQ+PGxpbmUgeDE9IjQ4Ny45MTg5ODQ3MTYyNTMyNSIgeTE9IjUwIiB4Mj0iNDg3LjkxODk4NDcxNjI1MzI1IiB5Mj0iMzcwIiBjbGFzcz0iZ3JpZC1saW5lIiAvPjx0ZXh0IHg9IjQ4Ny45MTg5ODQ3MTYyNTMyNSIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wNDA8L3RleHQ+PGxpbmUgeDE9IjUzNS4xNTg4NTc4MDU3ODQ4IiB5MT0iNTAiIHgyPSI1MzUuMTU4ODU3ODA1Nzg0OCIgeTI9IjM3MCIgY2xhc3M9ImdyaWQtbGluZSIgLz48dGV4dCB4PSI1MzUuMTU4ODU3ODA1Nzg0OCIgeT0iMzg2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MC4wNDU8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSI1MCIgd2lkdGg9IjQzMCIgaGVpZ2h0PSIzMjAiIGZpbGw9Im5vbmUiIGNsYXNzPSJheGlzLWxpbmUiIC8+PHRleHQgeD0iMTAyIiB5PSI2Ny4zMzMzMzMzMzMzMzMzMyIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPnN1bW1lICMwNCAoMTAgc2Vncyk8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSI1NC42NjY2NjY2NjY2NjY2NjQiIHdpZHRoPSI1MC4xNjg3NDUyMjEwODI2MSIgaGVpZ2h0PSIxNy4zMzMzMzMzMzMzMzMzMzYiIGZpbGw9IiNmYjhjMDAiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjciIC8+PHRleHQgeD0iMTY1LjE2ODc0NTIyMTA4MjYyIiB5PSI2Ny4zMzMzMzMzMzMzMzMzMyIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgZm9udC13ZWlnaHQ6Ym9sZDsiPjAuMDA1MzwvdGV4dD48dGV4dCB4PSIxMDIiIHk9Ijk0LjAwMDAwMDAwMDAwMDAxIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+c3VtbWUgIzA1ICgxOCBzZWdzKTwvdGV4dD48cmVjdCB4PSIxMTAiIHk9IjgxLjMzMzMzMzMzMzMzMzM0IiB3aWR0aD0iMjIuNDU3ODM1NjY2NzYzMzQ4IiBoZWlnaHQ9IjE3LjMzMzMzMzMzMzMzMzMzNiIgZmlsbD0iIzQzYTA0NyIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjAuNyIgLz48dGV4dCB4PSIxMzcuNDU3ODM1NjY2NzYzMzQiIHk9Ijk0LjAwMDAwMDAwMDAwMDAxIiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMjIyOyBmb250LXdlaWdodDpib2xkOyI+MC4wMDI0PC90ZXh0Pjx0ZXh0IHg9IjEwMiIgeT0iMTIwLjY2NjY2NjY2NjY2NjY5IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+c3VtbWUgIzEyICgyOCBzZWdzKTwvdGV4dD48cmVjdCB4PSIxMTAiIHk9IjEwOC4wMDAwMDAwMDAwMDAwMSIgd2lkdGg9IjMzLjEzNDA0Njk4NDk5NzUiIGhlaWdodD0iMTcuMzMzMzMzMzMzMzMzMzM2IiBmaWxsPSIjNDNhMDQ3IiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC43IiAvPjx0ZXh0IHg9IjE0OC4xMzQwNDY5ODQ5OTc1IiB5PSIxMjAuNjY2NjY2NjY2NjY2NjkiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IGZvbnQtd2VpZ2h0OmJvbGQ7Ij4wLjAwMzU8L3RleHQ+PHRleHQgeD0iMTAyIiB5PSIxNDcuMzMzMzMzMzMzMzMzMzEiIGNsYXNzPSJ0aWNrLWxhYmVsIiB0ZXh0LWFuY2hvcj0iZW5kIj5zdW1tZSAjMTQgKDE0IHNlZ3MpPC90ZXh0PjxyZWN0IHg9IjExMCIgeT0iMTM0LjY2NjY2NjY2NjY2NjY2IiB3aWR0aD0iMTAxLjI1Mzk0Mzk4MDEwMjE0IiBoZWlnaHQ9IjE3LjMzMzMzMzMzMzMzMzMzNiIgZmlsbD0iI2U1MzkzNSIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjAuNyIgLz48dGV4dCB4PSIyMTYuMjUzOTQzOTgwMTAyMTIiIHk9IjE0Ny4zMzMzMzMzMzMzMzMzMSIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgZm9udC13ZWlnaHQ6Ym9sZDsiPjAuMDEwNzwvdGV4dD48dGV4dCB4PSIxMDIiIHk9IjE3NC4wIiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+c3VtbWUgIzE1ICgzMCBzZWdzKTwvdGV4dD48cmVjdCB4PSIxMTAiIHk9IjE2MS4zMzMzMzMzMzMzMzMzNCIgd2lkdGg9IjE0My41ODA4NzAyNjgzMjI0OSIgaGVpZ2h0PSIxNy4zMzMzMzMzMzMzMzMzMzYiIGZpbGw9IiNlNTM5MzUiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjciIC8+PHRleHQgeD0iMjU4LjU4MDg3MDI2ODMyMjUiIHk9IjE3NC4wIiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMjIyOyBmb250LXdlaWdodDpib2xkOyI+MC4wMTUyPC90ZXh0Pjx0ZXh0IHg9IjEwMiIgeT0iMjAwLjY2NjY2NjY2NjY2NjY2IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+c3VtbWUgIzE4ICgxNyBzZWdzKTwvdGV4dD48cmVjdCB4PSIxMTAiIHk9IjE4OC4wIiB3aWR0aD0iNjAuNDk1MzgxNDc4NDU0MjM1IiBoZWlnaHQ9IjE3LjMzMzMzMzMzMzMzMzMzNiIgZmlsbD0iI2ZiOGMwMCIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjAuNyIgLz48dGV4dCB4PSIxNzUuNDk1MzgxNDc4NDU0MjUiIHk9IjIwMC42NjY2NjY2NjY2NjY2NiIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgZm9udC13ZWlnaHQ6Ym9sZDsiPjAuMDA2NDwvdGV4dD48dGV4dCB4PSIxMDIiIHk9IjIyNy4zMzMzMzMzMzMzMzMzMSIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPnR2c3VtICMwNCAoMjggc2Vncyk8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSIyMTQuNjY2NjY2NjY2NjY2NjYiIHdpZHRoPSIyNi4yODQyNjUzODcwMTU0MTMiIGhlaWdodD0iMTcuMzMzMzMzMzMzMzMzMzM2IiBmaWxsPSIjNDNhMDQ3IiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC43IiAvPjx0ZXh0IHg9IjE0MS4yODQyNjUzODcwMTU0IiB5PSIyMjcuMzMzMzMzMzMzMzMzMzEiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IGZvbnQtd2VpZ2h0OmJvbGQ7Ij4wLjAwMjg8L3RleHQ+PHRleHQgeD0iMTAyIiB5PSIyNTQuMCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPnR2c3VtICMwNyAoMTQgc2Vncyk8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSIyNDEuMzMzMzMzMzMzMzMzMzQiIHdpZHRoPSIyMS4wNTAwODc0NDg2OTUzMDQiIGhlaWdodD0iMTcuMzMzMzMzMzMzMzMzMzM2IiBmaWxsPSIjNDNhMDQ3IiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC43IiAvPjx0ZXh0IHg9IjEzNi4wNTAwODc0NDg2OTUzIiB5PSIyNTQuMCIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgZm9udC13ZWlnaHQ6Ym9sZDsiPjAuMDAyMjwvdGV4dD48dGV4dCB4PSIxMDIiIHk9IjI4MC42NjY2NjY2NjY2NjY3NCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPnR2c3VtICMxMSAoMTIgc2Vncyk8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSIyNjguMDAwMDAwMDAwMDAwMDYiIHdpZHRoPSIzNzMuOTEzMDQzNDc4MjYwOTMiIGhlaWdodD0iMTcuMzMzMzMzMzMzMzMzMzM2IiBmaWxsPSIjZTUzOTM1IiBzdHJva2U9IiMyMjIiIHN0cm9rZS13aWR0aD0iMC43IiAvPjx0ZXh0IHg9IjQ4OC45MTMwNDM0NzgyNjA5MyIgeT0iMjgwLjY2NjY2NjY2NjY2Njc0IiBzdHlsZT0iZm9udC1zaXplOjlweDsgZmlsbDojMjIyOyBmb250LXdlaWdodDpib2xkOyI+MC4wMzk2PC90ZXh0Pjx0ZXh0IHg9IjEwMiIgeT0iMzA3LjMzMzMzMzMzMzMzMzM3IiBjbGFzcz0idGljay1sYWJlbCIgdGV4dC1hbmNob3I9ImVuZCI+dHZzdW0gIzMwICgyNyBzZWdzKTwvdGV4dD48cmVjdCB4PSIxMTAiIHk9IjI5NC42NjY2NjY2NjY2NjY3IiB3aWR0aD0iMjEuMTYzNDYzMTQ0MTEwMTc4IiBoZWlnaHQ9IjE3LjMzMzMzMzMzMzMzMzMzNiIgZmlsbD0iIzQzYTA0NyIgc3Ryb2tlPSIjMjIyIiBzdHJva2Utd2lkdGg9IjAuNyIgLz48dGV4dCB4PSIxMzYuMTYzNDYzMTQ0MTEwMTgiIHk9IjMwNy4zMzMzMzMzMzMzMzMzNyIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgZm9udC13ZWlnaHQ6Ym9sZDsiPjAuMDAyMjwvdGV4dD48dGV4dCB4PSIxMDIiIHk9IjMzNC4wMDAwMDAwMDAwMDAwNiIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPnR2c3VtICM0MyAoMjYgc2Vncyk8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSIzMjEuMzMzMzMzMzMzMzMzMzciIHdpZHRoPSIzMS4wMjcxNDg2NDUyMDQzOSIgaGVpZ2h0PSIxNy4zMzMzMzMzMzMzMzMzMzYiIGZpbGw9IiM0M2EwNDciIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjciIC8+PHRleHQgeD0iMTQ2LjAyNzE0ODY0NTIwNDQiIHk9IjMzNC4wMDAwMDAwMDAwMDAwNiIgc3R5bGU9ImZvbnQtc2l6ZTo5cHg7IGZpbGw6IzIyMjsgZm9udC13ZWlnaHQ6Ym9sZDsiPjAuMDAzMzwvdGV4dD48dGV4dCB4PSIxMDIiIHk9IjM2MC42NjY2NjY2NjY2NjY3NCIgY2xhc3M9InRpY2stbGFiZWwiIHRleHQtYW5jaG9yPSJlbmQiPnR2c3VtICM0OSAoMjUgc2Vncyk8L3RleHQ+PHJlY3QgeD0iMTEwIiB5PSIzNDguMDAwMDAwMDAwMDAwMDYiIHdpZHRoPSI3MC45NTQyODkzODA0NzY1NCIgaGVpZ2h0PSIxNy4zMzMzMzMzMzMzMzMzMzYiIGZpbGw9IiNmYjhjMDAiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIwLjciIC8+PHRleHQgeD0iMTg1Ljk1NDI4OTM4MDQ3NjU1IiB5PSIzNjAuNjY2NjY2NjY2NjY2NzQiIHN0eWxlPSJmb250LXNpemU6OXB4OyBmaWxsOiMyMjI7IGZvbnQtd2VpZ2h0OmJvbGQ7Ij4wLjAwNzU8L3RleHQ+PHRleHQgeD0iMzI1LjAiIHk9IjQwNSIgY2xhc3M9ImF4aXMtbGFiZWwiPk1lYW4gU3F1YXJlZCBFcnJvciAoTVNFKTwvdGV4dD48L3N2Zz4NCg==" alt="Figure 6" class="vector-figure" />
+          </div>
+          <div class="figure-caption">
+            <strong>Figure 6:</strong> <em>Per-Video Rank Correlation Dispersion</em> &mdash; Kendall's Tau and Spearman's Rho per test video demonstrating variance across SumMe and TVSum domains.
+          </div>
+        </div>
+        
+
+<div class="table-caption">TABLE IV: Generalization Across Data Splits</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Partition</th>
+  <th>Video Count</th>
+  <th>Segment Count</th>
+  <th>MSE Loss</th>
+  <th>Pearson <span class="inline-math"><em>r</em></span></th>
+  <th>Pred Mean</th>
+  <th>Pred Std</th>
+  <th>Target Std</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Training Split</strong></td>
+  <td>52</td>
+  <td>1,018</td>
+  <td><strong>0.002103</strong></td>
+  <td><strong>+0.3010</strong></td>
+  <td>0.8804</td>
+  <td>0.0199</td>
+  <td>0.0477</td>
+</tr>
+<tr>
+  <td><strong>Validation Split</strong></td>
+  <td>11</td>
+  <td>239</td>
+  <td>0.003752</td>
+  <td>-0.0570</td>
+  <td>0.8732</td>
+  <td>0.0381</td>
+  <td>0.0458</td>
+</tr>
+<tr>
+  <td><strong>Test Split</strong></td>
+  <td>12</td>
+  <td>249</td>
+  <td>0.007335</td>
+  <td>-0.0506</td>
+  <td>0.8668</td>
+  <td>0.0712</td>
+  <td>0.0433</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3 class="subsection-title">Findings:</h3>
+- On the training set, the model achieves a statistically significant positive correlation (<strong><span class="inline-math"><em>r = +0.3010, p < 10^{-23}</em></span></strong>) with low loss (<span class="inline-math"><em>0.0021</em></span>).
+- However, on both validation and test sets, the correlation collapses to negative values (<span class="inline-math"><em>-0.057</em></span> and <span class="inline-math"><em>-0.051</em></span>), and MSE increases by <strong><span class="inline-math"><em>3.5\times</em></span></strong>.
+- This indicates <strong>overfitting to synthetic training artifacts</strong>: the BiLSTM memorized temporal position patterns specific to the training set that failed to generalize to unseen sequences.
+
+---
+
+<h2 class="section-title">7. Computational Complexity and Latency Profiling</h2>
+
+<h3 class="subsection-title">7.1 Model Architectural Footprint</h3>
+As detailed in [<code>fig7_param_distribution.svg</code>](file:///c:/Users/ravindra_007/OneDrive/Desktop/ai%20prioritizer/video-summarizer/research_evaluation/figures/fig7_param_distribution.svg) and Table V, the model contains <strong>1,004,801 parameters</strong>, occupying <strong>3.83 MB</strong> in 32-bit floating point format.
+
+<div class="table-caption">TABLE V: Parameter Distribution Across Architecture</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Sub-Module</th>
+  <th>Layer Specification</th>
+  <th>Parameter Count</th>
+  <th>Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Visual Projection</strong></td>
+  <td><i>\text{Linear}(512 \rightarrow 128) + \text{BN1d}(128)</i></td>
+  <td>66,048</td>
+  <td>6.6%</td>
+</tr>
+<tr>
+  <td><strong>Text Projection</strong></td>
+  <td><i>\text{Linear}(384 \rightarrow 128) + \text{BN1d}(128)</i></td>
+  <td>49,664</td>
+  <td>4.9%</td>
+</tr>
+<tr>
+  <td><strong>Multimodal Fusion</strong></td>
+  <td><i>\text{Linear}(256 \rightarrow 256)</i></td>
+  <td>65,792</td>
+  <td>6.5%</td>
+</tr>
+<tr>
+  <td><strong>BiLSTM Sequence Model</strong></td>
+  <td>2 Layers, <i>\text{input}=256, \text{hidden}=128</i> (Bidirectional)</td>
+  <td>789,504</td>
+  <td>78.6%</td>
+</tr>
+<tr>
+  <td><strong>Saliency Classifier</strong></td>
+  <td><i>\text{Linear}(256 \rightarrow 128) + \text{Linear}(128 \rightarrow 1)</i></td>
+  <td>33,025</td>
+  <td>3.3%</td>
+</tr>
+<tr>
+  <td><strong>Total</strong></td>
+  <td>Full Multimodal Network</td>
+  <td><strong>1,004,801</strong></td>
+  <td><strong>100.0%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3 class="subsection-title">7.2 End-to-End Execution Latency on Real Long Videos</h3>
+The complete pipeline was benchmarked on real long-format video assets hosted in <code>uploads/</code> using cached transcripts and visual features (Table VI).
+
+<div class="table-caption">TABLE VI: Pipeline Stage Latency Breakdown (AMD Ryzen 5 5600H CPU)</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Video Name</th>
+  <th>Duration</th>
+  <th>Total Chunks</th>
+  <th>Scoring & Selection Latency</th>
+  <th>T5-small Summarization</th>
+  <th>Total Pipeline Time</th>
+  <th>Real-Time Factor (RTF)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>diagnostic_test_001.mp4</code></td>
+  <td>0.3 min</td>
+  <td>1</td>
+  <td>16.0 ms</td>
+  <td>1.30 s</td>
+  <td>1.32 s</td>
+  <td>0.0698</td>
+</tr>
+<tr>
+  <td><code>e8b793cf-...-e9c4.mp4</code></td>
+  <td>15.8 min</td>
+  <td>6</td>
+  <td>196.4 ms</td>
+  <td>8.40 s</td>
+  <td>8.64 s</td>
+  <td>0.0091</td>
+</tr>
+<tr>
+  <td><code>test_video_30min.mp4</code></td>
+  <td>30.0 min</td>
+  <td>10</td>
+  <td>338.6 ms</td>
+  <td>11.37 s</td>
+  <td>11.75 s</td>
+  <td><strong>0.0065</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3 class="subsection-title">Latency Highlights:</h3>
+1. <strong>Sub-Second Importance Scoring:</strong> Scoring an entire 30-minute video (10 chunks) takes only <strong>338.6 ms</strong> on CPU, averaging <strong>33.8 ms per 3-minute chunk</strong>.
+2. <strong>Faster-Than-Real-Time Operation:</strong> The entire summarization pipeline achieves an RTF of <strong>0.0065</strong> for a 30-minute video. This indicates the system runs over <strong>150× faster than real-time playback</strong>.
+3. <strong>Bottleneck Identification:</strong> T5-small abstractive text generation accounts for <strong>96.8%</strong> of total runtime (<span class="inline-math"><em>11.37\text{s} / 11.75\text{s}</em></span>), whereas importance scoring and temporal alignment account for less than 3.2%.
+
+---
+
+<h2 class="section-title">8. Hierarchical Text Summarization Quality</h2>
+
+The text summarization module was evaluated on real and benchmark transcripts (Table VII).
+
+<div class="table-caption">TABLE VII: T5-Small Abstractive Summarization Benchmarks</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Sample ID</th>
+  <th>Input Word Count</th>
+  <th>Output Summary Words</th>
+  <th>Compression Ratio</th>
+  <th>Latency (s)</th>
+  <th>Representative Abstractive Summary Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Chunk 1 (CV Lecture)</strong></td>
+  <td>34</td>
+  <td>9</td>
+  <td><strong>73.5%</strong></td>
+  <td>1.020 s</td>
+  <td><em>"The architecture allows hierarchical feature extraction from low-level edges."</em></td>
+</tr>
+<tr>
+  <td><strong>Chunk 2 (DB Systems)</strong></td>
+  <td>30</td>
+  <td>19</td>
+  <td><strong>36.7%</strong></td>
+  <td>0.867 s</td>
+  <td><em>"We cover database indexing and query optimization. B-trees provide logarithmic search guarantees..."</em></td>
+</tr>
+<tr>
+  <td><strong>Chunk 3 (Evaluation)</strong></td>
+  <td>30</td>
+  <td>23</td>
+  <td><strong>23.3%</strong></td>
+  <td>0.530 s</td>
+  <td><em>"The experimental results demonstrate that our proposed multimodal fusion model reduces MSE significantly..."</em></td>
+</tr>
+<tr>
+  <td><strong>Overall Video Aggregation</strong></td>
+  <td>245</td>
+  <td>48</td>
+  <td><strong>80.4%</strong></td>
+  <td>2.150 s</td>
+  <td>Executive overview with 6 structured bullet points and timestamped section headers.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+T5-small produces clean, grammatically coherent sentences with an average compression ratio of <strong>44.5%</strong> for individual chunks and over <strong>80%</strong> for final video summaries.
+
+---
+
+<h2 class="section-title">9. Comparison with Published Literature Baselines</h2>
+
+To contextualize the findings within the broader video summarization literature, Table VIII benchmarks the framework against state-of-the-art models on SumMe and TVSum.
+
+<div class="table-caption">TABLE VIII: Comparison with Published Literature on SumMe and TVSum</div>
+
+<div class="table-container">
+<table class="ieee-table">
+<thead>
+<tr>
+  <th>Method</th>
+  <th>Backbone Architecture</th>
+  <th>Modality</th>
+  <th>SumMe F1 (%)</th>
+  <th>TVSum F1 (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>dppLSTM</strong> (Zhang et al., ECCV 2016)</td>
+  <td>GoogLeNet (1024-d) + BiLSTM + DPP</td>
+  <td>Visual</td>
+  <td>38.6</td>
+  <td>54.7</td>
+</tr>
+<tr>
+  <td><strong>DR-DSN</strong> (Zhou et al., AAAI 2018)</td>
+  <td>GoogLeNet (1024-d) + BiLSTM + RL</td>
+  <td>Visual</td>
+  <td>41.4</td>
+  <td>57.6</td>
+</tr>
+<tr>
+  <td><strong>VASNet</strong> (Fajtl et al., AMDO 2019)</td>
+  <td>GoogLeNet (1024-d) + Self-Attention</td>
+  <td>Visual</td>
+  <td>49.7</td>
+  <td>61.4</td>
+</tr>
+<tr>
+  <td><strong>PGL-SUM</strong> (Apostolidis et al., ACM MM 2021)</td>
+  <td>Inception-v3 + Multi-Head Attention</td>
+  <td>Visual</td>
+  <td>50.8</td>
+  <td>63.9</td>
+</tr>
+<tr>
+  <td><strong>SUM-GNN</strong> (Zhao et al., TMM 2022)</td>
+  <td>ResNet-50 + Graph Neural Network</td>
+  <td>Visual</td>
+  <td>51.9</td>
+  <td>64.3</td>
+</tr>
+<tr>
+  <td><strong>This Work (Reported Binary Metric)</strong></td>
+  <td>ResNet-18 (512-d) + ST (384-d) + BiLSTM</td>
+  <td>Multimodal</td>
+  <td><strong>99.6\</strong>*</td>
+  <td><strong>99.2\</strong>*</td>
+</tr>
+<tr>
+  <td><strong>This Work (Rank Correlation <i>r</i>)</strong></td>
+  <td>ResNet-18 (512-d) + ST (384-d) + BiLSTM</td>
+  <td>Multimodal</td>
+  <td><strong>-0.129</strong></td>
+  <td><strong>+0.013</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<blockquote class="ieee-quote"><strong>\*Scientific Caveat for Publication:</strong> The <span class="inline-math"><em>99\%+</em></span> binary F1-score reported by this framework is an artifact of thresholding clustered synthetic data at <span class="inline-math"><em>\theta = 0.5</em></span>. In contrast, published literature baselines evaluate the intersection-over-union (IoU) of selected video segments against multiple human user summaries constrained to a 15% video length budget. Under formal rank correlation, the current checkpoint does not yet surpass random ranking on benchmark annotations.</blockquote>
+
+---
+
+<h2 class="section-title">10. Threats to Validity and Failure Modes</h2>
+
+1. <strong>Synthetic Training Artifacts:</strong> The model was trained on synthetic Gaussian vectors rather than real benchmark frames. This explains the disconnect between training correlation (<span class="inline-math"><em>r = +0.30</em></span>) and test correlation (<span class="inline-math"><em>r = -0.05</em></span>).
+2. <strong>Score-Scaling Heuristic:</strong> In <code>importance_model.py</code> (lines 120–131), when prediction variance drops below 0.15, the application artificially recalculates scores between 0.42 and 0.96 using transcript word count and frame standard deviation:
+   <div class="equation"><em>\text{Score}_{\text{scaled}} = \min\left(0.96, \max\left(0.42, 0.50 + 0.35 \frac{i}{N-1} + \Delta_{\text{score}} + \frac{W_t}{200} + 2\sigma_v\right)\right)</em></div>
+   This heuristic masks the model's low variance in production, but represents an engineering workaround rather than a learned capability.
+3. <strong>Coarse Temporal Granularity:</strong> Fixed 180-second chunks lack boundary awareness, occasionally grouping distinct topics into a single segment.
+
+---
+
+<h2 class="section-title">11. Concrete Recommendations for Future Research</h2>
+
+1. <strong>Execute Real Feature Extraction:</strong> Run <code>python -m training.feature_extraction</code> on real SumMe and TVSum videos (or LVSum) using Kaggle credentials to replace synthetic data with authentic ImageNet and human annotations.
+2. <strong>Implement KTS or Semantic Scene Boundaries:</strong> Replace the rigid 180-second chunking with Kernel Temporal Segmentation or optical flow scene-change detection.
+3. <strong>Transition to Cross-Attention Summarization:</strong> Pass visual features directly to the LLM (e.g., using SmolVLM or Qwen2-VL) so that visual demonstrations directly shape the generated text summary.
+4. <strong>Adopt Standard Evaluation Protocols:</strong> Evaluate using the knapsack 15% video budget and 5-fold cross-validation with harmonic mean F1 against human summary selections.
+
+</div>
+
+</body>
+</html>
