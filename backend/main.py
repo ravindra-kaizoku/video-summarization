@@ -33,7 +33,7 @@ def read_root():
     return {
         "status": "online",
         "system": "Video Summarization Using LLMs API",
-        "version": "1.6.0",
+        "version": "1.7.0",
         "commit": os.environ.get("RENDER_GIT_COMMIT", "c6e8320"),
         "docs_url": "/docs"
     }

@@ -11,4 +11,7 @@ pip install --no-cache-dir torch torchvision --index-url https://download.pytorc
 echo "==> Installing remaining dependencies..."
 pip install --no-cache-dir -r requirements.txt
 
+echo "==> Pre-downloading Faster-Whisper tiny model into local cache..."
+python -c "from faster_whisper import WhisperModel; WhisperModel('tiny', device='cpu', compute_type='int8')" || echo "Pre-cache skipped (will load at runtime)"
+
 echo "==> Build finished successfully!"

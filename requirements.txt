@@ -21,3 +21,4 @@ faster-whisper>=0.10.0
 kagglehub>=0.2.0
 yt-dlp
 youtube-transcript-api>=1.0.0
+SpeechRecognition>=3.10.0
