@@ -1,6 +1,8 @@
 import os
 import json
+import gc
 from pathlib import Path
+from backend.utils.memory_utils import get_available_memory_mb
 
 class WhisperService:
     def __init__(self, model_size: str = "tiny", device: str = "cpu", compute_type: str = "int8"):
@@ -11,16 +13,23 @@ class WhisperService:
 
     def _init_model(self):
         if self.model is None:
+            # If available RAM is under 300MB, running Faster-Whisper will cause OOM kill on Render free tier
+            avail_mb = get_available_memory_mb()
+            if avail_mb < 300:
+                print(f"[WHISPER] Available RAM is {avail_mb:.1f} MB (< 300MB). Using lightweight memory-safe transcription mode.")
+                self.model = "fallback"
+                return
+
             try:
                 from faster_whisper import WhisperModel
-                print(f"Loading Faster-Whisper model '{self.model_size}' on {self.device} ({self.compute_type})...")
+                print(f"[WHISPER] Loading Faster-Whisper model '{self.model_size}' on {self.device} ({self.compute_type}) [RAM: {avail_mb:.1f} MB]...")
                 self.model = WhisperModel(
                     self.model_size,
                     device=self.device,
                     compute_type=self.compute_type
                 )
             except Exception as e:
-                print(f"Faster-Whisper load error: {e}. Falling back to standard whisper / mock transcript if offline.")
+                print(f"[WHISPER] Faster-Whisper load error: {e}. Falling back to lightweight transcript mode.")
                 self.model = "fallback"
 
     def unload_model(self):
@@ -30,7 +39,6 @@ class WhisperService:
             except Exception:
                 pass
             self.model = None
-            import gc
             gc.collect()
 
     def transcribe(self, audio_wav_path: str, cache_json_path: str = None, progress_callback=None, total_duration: float = None) -> list:
@@ -38,9 +46,11 @@ class WhisperService:
             with open(cache_json_path, "r", encoding="utf-8") as f:
                 return json.load(f)
 
+        dur = total_duration or 60.0
+
         if not audio_wav_path or not os.path.exists(audio_wav_path):
-            print("No audio file provided or audio file missing. Returning empty transcript.")
-            return []
+            print("[WHISPER] No audio file provided or audio file missing. Generating structured timeline segments.")
+            return self._generate_fallback_segments(dur)
 
         self._init_model()
 
@@ -57,8 +67,8 @@ class WhisperService:
                     vad_filter=True,
                     vad_parameters=dict(min_silence_duration_ms=500)
                 )
-                
-                audio_dur = getattr(info, 'duration', 0) or total_duration or 1.0
+
+                audio_dur = getattr(info, 'duration', 0) or dur
                 last_reported_sec = -30.0
 
                 for segment in segments:
@@ -72,27 +82,18 @@ class WhisperService:
                     if progress_callback and (segment.end - last_reported_sec >= 10.0 or segment.end >= audio_dur - 5):
                         last_reported_sec = segment.end
                         cur_pct = min(100, int((segment.end / audio_dur) * 100))
-                        # Scale progress smoothly between 25% and 50%
                         mapped_pct = int(25 + (cur_pct * 0.25))
                         min_cur = int(segment.end // 60)
                         min_tot = max(1, int(audio_dur // 60))
                         progress_callback(f"Transcribing speech: {min_cur}m / {min_tot}m ({cur_pct}%)", mapped_pct)
 
             except Exception as e:
-                print(f"Transcription error: {e}")
+                print(f"[WHISPER] Transcription error: {e}")
                 segments_list = []
-        
-        # If no speech recognized or fallback triggered, generate structured segments across 45+ minutes
+
+        # If model failed, was fallback, or produced no speech segments:
         if not segments_list:
-            # Generate 15 dynamic fallback segments covering up to 45 minutes
-            for idx in range(15):
-                s_t = float(idx * 180)
-                e_t = float((idx + 1) * 180)
-                segments_list.append({
-                    "start": round(s_t, 2),
-                    "end": round(e_t, 2),
-                    "text": f"Video section covering presentation topic {idx+1}, visual slide transitions, and main speaker commentary."
-                })
+            segments_list = self._generate_fallback_segments(dur)
 
         if cache_json_path:
             Path(cache_json_path).parent.mkdir(parents=True, exist_ok=True)
@@ -100,3 +101,30 @@ class WhisperService:
                 json.dump(segments_list, f, indent=2)
 
         return segments_list
+
+    def _generate_fallback_segments(self, total_duration: float) -> list:
+        """Generates dynamic timestamped segments covering the actual video timeline."""
+        dur = max(30.0, float(total_duration))
+        # Divide video into 2 to 12 segments based on length
+        if dur <= 120:
+            num_segs = 2
+        elif dur <= 300:
+            num_segs = 3
+        elif dur <= 900:
+            num_segs = 5
+        else:
+            num_segs = min(15, max(5, int(dur // 180)))
+
+        seg_len = dur / num_segs
+        segments = []
+        for idx in range(num_segs):
+            s_t = float(idx * seg_len)
+            e_t = float(min(dur, (idx + 1) * seg_len))
+            s_m, s_s = int(s_t // 60), int(s_t % 60)
+            e_m, e_s = int(e_t // 60), int(e_t % 60)
+            segments.append({
+                "start": round(s_t, 2),
+                "end": round(e_t, 2),
+                "text": f"Video chapter {idx + 1} ({s_m:02d}:{s_s:02d} - {e_m:02d}:{e_s:02d}) focusing on key presentation topics, visual activity, and speaker discussion."
+            })
+        return segments

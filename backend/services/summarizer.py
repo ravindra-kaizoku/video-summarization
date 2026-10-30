@@ -2,8 +2,7 @@ import json
 import requests
 import re
 from pathlib import Path
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from backend.utils.memory_utils import get_available_memory_mb
 
 class HierarchicalSummarizer:
     def __init__(self, config: dict):
@@ -18,22 +17,29 @@ class HierarchicalSummarizer:
 
     def _init_local_model(self):
         if self.tokenizer is None or self.local_model is None:
-            model_name = "t5-small"
-            print(f"[SUMMARIZER] Loading pretrained text summarization model ({model_name})...")
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-            self.local_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            avail_mb = get_available_memory_mb()
+            if avail_mb < 250:
+                print(f"[SUMMARIZER] Available RAM is {avail_mb:.1f} MB (< 250MB). Using smart extractive summarization.")
+                self.local_model = "lightweight"
+                return
+
+            try:
+                from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+                model_name = "t5-small"
+                print(f"[SUMMARIZER] Loading text summarizer ({model_name}) [RAM: {avail_mb:.1f} MB]...")
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.local_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            except Exception as e:
+                print(f"[SUMMARIZER] T5 load error: {e}. Using lightweight summarizer.")
+                self.local_model = "lightweight"
 
     def _clean_summary(self, text: str) -> str:
-        """Cleans up text, removes duplicate phrases, hallucinations and formats cleanly."""
         text = text.strip()
         if not text:
             return ""
-        
-        # Remove T5 hallucinations or odd tail fragments
         text = re.sub(r' - including the eu and afghanistan\..*', '.', text, flags=re.IGNORECASE)
         text = re.sub(r'\s+[a-z]+:[.\s]*$', '.', text)
 
-        # Split into sentences and deduplicate
         sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', text) if s.strip()]
         unique = []
         for s in sentences:
@@ -42,20 +48,15 @@ class HierarchicalSummarizer:
                     s += "."
                 s = s[0].upper() + s[1:]
                 unique.append(s)
-        
-        cleaned = " ".join(unique)
-        return cleaned
+        return " ".join(unique)
 
     def generate_chunk_summary(self, chunk: dict) -> str:
-        """Generates a concise, high-quality AI summary for an individual video chunk."""
         start_min = int(chunk['start_time'] // 60)
         start_sec = int(chunk['start_time'] % 60)
         end_min = int(chunk['end_time'] // 60)
         end_sec = int(chunk['end_time'] % 60)
-        
+
         transcript = chunk.get("transcript", "").strip()
-        
-        # Filter out default placeholder sentences
         if "[Video segment from" in transcript:
             transcript = ""
 
@@ -63,41 +64,35 @@ class HierarchicalSummarizer:
             return f"This section ({start_min:02d}:{start_sec:02d}-{end_min:02d}:{end_sec:02d}) features key visual demonstrations and presentation topics."
 
         if self.provider == "openai" and self.api_key:
-            prompt = f"Summarize this video segment transcript ({start_min}:{start_sec:02d} to {end_min}:{end_sec:02d}) in 1-2 concise sentences focusing on key topics:\n{transcript}"
+            prompt = f"Summarize this video segment ({start_min}:{start_sec:02d} to {end_min}:{end_sec:02d}) in 1-2 concise sentences:\n{transcript}"
             res = self._call_openai(prompt)
             if res:
                 return res
 
-        # Abstractive local text summarization using pretrained model
-        try:
-            self._init_local_model()
-            # Clean and truncate transcript to avoid token length overflow
-            words = transcript.split()
-            if len(words) > 400:
+        # Abstractive local model if RAM allows
+        self._init_local_model()
+        if self.local_model != "lightweight" and self.local_model is not None and self.tokenizer is not None:
+            try:
+                words = transcript.split()
                 input_text = " ".join(words[:400])
-            else:
-                input_text = transcript
+                prompt_text = f"summarize: {input_text}"
+                inputs = self.tokenizer(prompt_text, return_tensors="pt", max_length=512, truncation=True)
+                summary_ids = self.local_model.generate(
+                    inputs["input_ids"],
+                    max_length=60,
+                    min_length=15,
+                    num_beams=2,
+                    no_repeat_ngram_size=2,
+                    early_stopping=True
+                )
+                raw_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+                cleaned = self._clean_summary(raw_summary)
+                if len(cleaned.split()) >= 4:
+                    return cleaned
+            except Exception as e:
+                print(f"[SUMMARIZER] Local model generation error: {e}")
 
-            prompt_text = f"summarize: {input_text}"
-            inputs = self.tokenizer(prompt_text, return_tensors="pt", max_length=512, truncation=True)
-            
-            summary_ids = self.local_model.generate(
-                inputs["input_ids"],
-                max_length=60,
-                min_length=15,
-                num_beams=2,
-                no_repeat_ngram_size=2,
-                early_stopping=True
-            )
-            raw_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-            cleaned = self._clean_summary(raw_summary)
-
-            if len(cleaned.split()) >= 4:
-                return cleaned
-        except Exception as e:
-            print(f"[SUMMARIZER] Local model error: {e}")
-
-        # Fallback abstractive transformation (never raw transcript copy)
+        # Smart extractive summary
         sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', transcript) if len(s.strip()) > 15]
         if sentences:
             topic = sentences[0]
@@ -107,15 +102,7 @@ class HierarchicalSummarizer:
         return f"This segment ({start_min:02d}:{start_sec:02d}-{end_min:02d}:{end_sec:02d}) outlines main concepts and key discussions."
 
     def generate_final_summary(self, video_metadata: dict, selected_chunks: list, chunk_summaries: list) -> dict:
-        """
-        Hierarchical summarization: aggregates chunk summaries to produce:
-        - Overall Video Summary
-        - Content-Derived Key Points (4-8 bullet points)
-        - Timestamped Sections with titles and AI summaries
-        """
         duration_mins = video_metadata.get("duration_minutes", 30)
-        
-        # Combine section summaries for global summarization
         combined_summaries = [s for s in chunk_summaries if s]
         combined_text = " ".join(combined_summaries)
 
@@ -123,7 +110,7 @@ class HierarchicalSummarizer:
         key_points = []
 
         if self.provider == "openai" and self.api_key:
-            prompt = f"Based on these segment summaries of a {duration_mins:.1f}-minute video:\n{combined_text}\n\nProvide an overall concise summary of the entire video, followed by 4-8 bullet points of key takeaways."
+            prompt = f"Based on segment summaries of a {duration_mins:.1f}-minute video:\n{combined_text}\n\nProvide an overall concise summary, followed by 4-8 bullet points of key takeaways."
             res = self._call_openai(prompt)
             if "Key takeaways:" in res:
                 parts = res.split("Key takeaways:")
@@ -133,22 +120,23 @@ class HierarchicalSummarizer:
                 overall_summary = res
 
         if not overall_summary:
-            try:
-                self._init_local_model()
-                prompt_text = f"summarize: {combined_text[:1500]}"
-                inputs = self.tokenizer(prompt_text, return_tensors="pt", max_length=512, truncation=True)
-                summary_ids = self.local_model.generate(
-                    inputs["input_ids"],
-                    max_length=120,
-                    min_length=40,
-                    num_beams=2,
-                    no_repeat_ngram_size=2,
-                    early_stopping=True
-                )
-                overall_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-                overall_summary = self._clean_summary(overall_summary)
-            except Exception as e:
-                print(f"[SUMMARIZER] Overall summary generation error: {e}")
+            self._init_local_model()
+            if self.local_model != "lightweight" and self.local_model is not None and self.tokenizer is not None:
+                try:
+                    prompt_text = f"summarize: {combined_text[:1500]}"
+                    inputs = self.tokenizer(prompt_text, return_tensors="pt", max_length=512, truncation=True)
+                    summary_ids = self.local_model.generate(
+                        inputs["input_ids"],
+                        max_length=120,
+                        min_length=40,
+                        num_beams=2,
+                        no_repeat_ngram_size=2,
+                        early_stopping=True
+                    )
+                    overall_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+                    overall_summary = self._clean_summary(overall_summary)
+                except Exception as e:
+                    print(f"[SUMMARIZER] Overall summary error: {e}")
 
         if not overall_summary:
             if combined_summaries:
@@ -156,7 +144,7 @@ class HierarchicalSummarizer:
             else:
                 overall_summary = f"A detailed {duration_mins:.1f}-minute video presentation covering core concepts and visual demonstrations."
 
-        # Generate 4-8 content-derived key points directly from section summaries
+        # Key points (4-8 takeaways)
         if not key_points:
             key_points = []
             for s in combined_summaries:
@@ -166,10 +154,8 @@ class HierarchicalSummarizer:
                         s_clean += '.'
                     if s_clean not in key_points:
                         key_points.append(s_clean)
-            
-            # Ensure between 4 and 8 key points
+
             if len(key_points) < 4:
-                # Add sentences derived from chunk transcripts
                 for chunk in selected_chunks:
                     trans = chunk.get("transcript", "")
                     sents = [st.strip() for st in re.split(r'(?<=[.!?]) +', trans) if len(st.strip()) > 25]
@@ -180,7 +166,7 @@ class HierarchicalSummarizer:
             if len(key_points) < 4:
                 key_points.append("Comprehensive topic breakdown across the full video timeline.")
 
-        # Build Timestamped Sections
+        # Timestamped Sections
         important_sections = []
         for i, (chunk, summary) in enumerate(zip(selected_chunks, chunk_summaries)):
             start_sec = chunk["start_time"]
@@ -190,7 +176,6 @@ class HierarchicalSummarizer:
             start_fmt = f"{int(start_sec // 60):02d}:{int(start_sec % 60):02d}"
             end_fmt = f"{int(end_sec // 60):02d}:{int(end_sec % 60):02d}"
 
-            # Create a content-derived section title from the summary
             first_words = " ".join(summary.split()[:5]).strip(",.!?")
             if first_words:
                 section_title = f"{start_fmt} - {end_fmt} | {first_words}..."
@@ -233,7 +218,7 @@ class HierarchicalSummarizer:
         return ""
 
     def unload_model(self):
-        if self.local_model is not None:
+        if self.local_model is not None and self.local_model != "lightweight":
             try:
                 del self.local_model
             except Exception:

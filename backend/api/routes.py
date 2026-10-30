@@ -407,11 +407,11 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
         sys.stderr.flush()
 
         user_facing_msg = f"Error: {err_msg}"
-        if "bot" in err_msg.lower() or "sign in" in err_msg.lower():
+        err_lower = err_msg.lower()
+        if any(k in err_lower for k in ["bot", "sign in", "blocking requests", "cloud provider", "transcript"]):
             user_facing_msg = (
-                "YouTube blocked this video download. "
-                "The transcript-based fallback also failed. "
-                "Please upload your local video file using the Upload Video tab."
+                "YouTube restricts direct streaming and caption requests from cloud hosting IPs. "
+                "Please upload your video file directly using the 'Upload Video' tab for complete, reliable AI summarization!"
             )
 
         tasks_db[task_id]["status"] = "failed"

@@ -1,10 +1,10 @@
 import os
 import math
+import hashlib
 import torch
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from training.model import MultimodalImportanceModel
-
+from backend.utils.memory_utils import get_available_memory_mb
 
 class VideoImportanceService:
     def __init__(self, model_path: str = "models/video_importance_model.pt", device: str = "cpu"):
@@ -13,9 +13,49 @@ class VideoImportanceService:
         self.text_embedder = None
         self.model = None
 
+    def _fallback_text_embed(self, text: str) -> list:
+        """
+        Memory-safe 384-dimensional text feature vector.
+        Maps word n-grams into a 384-D representation with term frequency weighting.
+        Uses 0 MB of model RAM and runs instantaneously.
+        """
+        vec = [0.0] * 384
+        words = text.lower().split()
+        if not words:
+            return vec
+        for i, w in enumerate(words):
+            h = int(hashlib.md5(w.encode('utf-8')).hexdigest(), 16)
+            idx = h % 384
+            vec[idx] += 1.0
+            # Bi-gram
+            if i + 1 < len(words):
+                bg = f"{w}_{words[i+1]}"
+                h_bg = int(hashlib.md5(bg.encode('utf-8')).hexdigest(), 16)
+                vec[h_bg % 384] += 0.5
+
+        norm = sum(x * x for x in vec) ** 0.5
+        if norm > 0:
+            vec = [x / norm for x in vec]
+        return vec
+
     def _init_model(self):
+        avail_mb = get_available_memory_mb()
+
+        # 1. Text Embedder
         if self.text_embedder is None:
-            self.text_embedder = SentenceTransformer("all-MiniLM-L6-v2", device=self.device)
+            if avail_mb < 220:
+                print(f"[MODEL] Available RAM is {avail_mb:.1f} MB (< 220MB). Using memory-safe text embedding.")
+                self.text_embedder = "lightweight"
+            else:
+                try:
+                    from sentence_transformers import SentenceTransformer
+                    print(f"[MODEL] Loading SentenceTransformer [RAM: {avail_mb:.1f} MB]...")
+                    self.text_embedder = SentenceTransformer("all-MiniLM-L6-v2", device=self.device)
+                except Exception as e:
+                    print(f"[MODEL] SentenceTransformer load error: {e}. Using lightweight fallback.")
+                    self.text_embedder = "lightweight"
+
+        # 2. PyTorch Multimodal Importance Model (4MB - lightweight)
         if self.model is None:
             if not os.path.exists(self.model_path):
                 print(f"[MODEL] Warning: checkpoint '{self.model_path}' not found. Using untrained weights.")
@@ -28,26 +68,16 @@ class VideoImportanceService:
                     visual_dim=512, text_dim=384, fused_dim=256, hidden_dim=128
                 ).to(self.device)
                 self.model.load_state_dict(checkpoint["model_state_dict"])
-                print(f"[MODEL] Loaded checkpoint from {self.model_path}")
+                print(f"[MODEL] Loaded trained checkpoint from {self.model_path}")
             self.model.eval()
 
     def _dynamic_target_count(self, num_chunks: int, top_k_cap: int) -> int:
-        """
-        Scale the target number of selected sections with total chunks.
-        For long videos (e.g., 40-45 mins with 15 chunks), select 10 to 15 sections
-        to ensure full coverage from 00:00 to end.
-        """
         if num_chunks <= 15:
             return max(min(10, num_chunks), num_chunks)
         target = max(10, math.ceil(num_chunks * 0.85))
         return min(target, top_k_cap)
 
     def _coverage_aware_select(self, scored_chunks: list, target_n: int) -> list:
-        """
-        Select `target_n` chunks while guaranteeing coverage of the full timeline.
-        Divides the full video duration into `target_n` equal temporal windows,
-        ensuring every part of the timeline (00:00 -> end) is represented.
-        """
         if not scored_chunks:
             return []
 
@@ -68,7 +98,6 @@ class VideoImportanceService:
             win_end = total_start + (w + 1) * window_size
             win_mid = (win_start + win_end) / 2.0
 
-            # Chunks whose midpoint is within this window
             candidates = [
                 c for c in scored_chunks
                 if c["chunk_id"] not in used_ids
@@ -76,10 +105,8 @@ class VideoImportanceService:
             ]
 
             if candidates:
-                # Pick highest-scoring chunk in this window
                 best = max(candidates, key=lambda c: c["importance_score"])
             else:
-                # Pick nearest unused chunk to this window's centre
                 all_unused = [c for c in scored_chunks if c["chunk_id"] not in used_ids]
                 if not all_unused:
                     continue
@@ -88,13 +115,9 @@ class VideoImportanceService:
             selected.append(best)
             used_ids.add(best["chunk_id"])
 
-        # Sort chronologically
         return sorted(selected, key=lambda x: x["chunk_id"])
 
     def score_chunks(self, chunks: list, top_k: int = 15) -> tuple:
-        """
-        Score every chunk then select sections using coverage-aware logic.
-        """
         self._init_model()
 
         if not chunks:
@@ -105,23 +128,30 @@ class VideoImportanceService:
         for chunk in chunks:
             v_feat = chunk.get("visual_features", [0.0] * 512)
             v_feats_list.append(v_feat)
-            t_feat = self.text_embedder.encode(chunk.get("transcript", "")).tolist()
+
+            t_text = chunk.get("transcript", "")
+            if self.text_embedder == "lightweight" or self.text_embedder is None:
+                t_feat = self._fallback_text_embed(t_text)
+            else:
+                try:
+                    t_feat = self.text_embedder.encode(t_text).tolist()
+                except Exception:
+                    t_feat = self._fallback_text_embed(t_text)
             t_feats_list.append(t_feat)
 
-        v_tensor = torch.tensor([v_feats_list], dtype=torch.float32).to(self.device)  # (1, seq, 512)
-        t_tensor = torch.tensor([t_feats_list], dtype=torch.float32).to(self.device)  # (1, seq, 384)
+        v_tensor = torch.tensor([v_feats_list], dtype=torch.float32).to(self.device)
+        t_tensor = torch.tensor([t_feats_list], dtype=torch.float32).to(self.device)
 
         with torch.no_grad():
-            scores_tensor = self.model(v_tensor, t_tensor).squeeze(0).squeeze(-1)  # (seq,)
+            scores_tensor = self.model(v_tensor, t_tensor).squeeze(0).squeeze(-1)
             scores = scores_tensor.cpu().numpy().tolist()
 
         if isinstance(scores, float):
             scores = [scores]
 
-        # Ensure dynamic contrast across segment importance scores
+        # Dynamic contrast scaling
         min_s, max_s = min(scores), max(scores)
         if max_s - min_s < 0.15:
-            # Scale scores across 0.45 to 0.95 using raw model output + visual/transcript novelty
             scaled_scores = []
             for i, chunk in enumerate(chunks):
                 t_len = len(chunk.get("transcript", "").split())
@@ -132,31 +162,21 @@ class VideoImportanceService:
                 scaled_scores.append(final_score)
             scores = scaled_scores
 
-        # ── Attach scores ──────────────────────────────────────────────────────
         scored_chunks = []
         for i, chunk in enumerate(chunks):
             c = dict(chunk)
             c["importance_score"] = round(float(scores[i]), 2)
             scored_chunks.append(c)
 
-        print(f"[MODEL] Scores for {len(scored_chunks)} chunks: "
-              f"min={min(scores):.2f} max={max(scores):.2f} mean={sum(scores)/len(scores):.2f}")
+        print(f"[MODEL] Scores for {len(scored_chunks)} chunks: min={min(scores):.2f} max={max(scores):.2f}")
 
-        # ── Dynamic target count then coverage-aware selection ─────────────────
         target_n = self._dynamic_target_count(len(scored_chunks), top_k)
-        print(f"[MODEL] Coverage-aware selection: {len(scored_chunks)} candidates -> target {target_n} sections")
-
         selected_chunks = self._coverage_aware_select(scored_chunks, target_n)
-        print(f"[MODEL] Final selected sections: {len(selected_chunks)}")
-        for c in selected_chunks:
-            s, e = c["start_time"], c["end_time"]
-            print(f"        [{int(s//60):02d}:{int(s%60):02d} - {int(e//60):02d}:{int(e%60):02d}] "
-                  f"score={c['importance_score']:.2f}")
 
         return scored_chunks, selected_chunks
 
     def unload_model(self):
-        if self.text_embedder is not None:
+        if self.text_embedder is not None and self.text_embedder != "lightweight":
             try:
                 del self.text_embedder
             except Exception:

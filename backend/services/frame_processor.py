@@ -44,8 +44,9 @@ class FrameProcessor:
         target_indices = list(range(0, total_video_frames, frame_step))
         if not target_indices:
             target_indices = [0]
-            
-        max_frames = 25
+
+        # Limit to max 15 representative keyframes to keep memory low on Render
+        max_frames = 15
         if len(target_indices) > max_frames:
             step = len(target_indices) / max_frames
             target_indices = [target_indices[int(i * step)] for i in range(max_frames)]
@@ -63,12 +64,13 @@ class FrameProcessor:
             frame_filename = f"frame_{timestamp:.1f}s.jpg"
             frame_path = os.path.join(frames_dir, frame_filename)
 
-            cv2.imwrite(frame_path, frame)
-            
-            # Convert OpenCV BGR to PIL RGB
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Resize frame immediately to 224x224 to reduce memory usage by 97%
+            frame_small = cv2.resize(frame, (224, 224), interpolation=cv2.INTER_AREA)
+            cv2.imwrite(frame_path, frame_small)
+
+            frame_rgb = cv2.cvtColor(frame_small, cv2.COLOR_BGR2RGB)
             pil_img = Image.fromarray(frame_rgb)
-            
+
             features = self.feature_extractor.extract_features(pil_img)
             description = self.feature_extractor.generate_visual_description(pil_img)
 
@@ -76,10 +78,10 @@ class FrameProcessor:
                 "timestamp": timestamp,
                 "frame_path": frame_path,
                 "description": description,
-                "features": features.tolist()
+                "features": features.tolist() if hasattr(features, 'tolist') else list(features)
             })
 
-            if progress_callback and (idx % 5 == 0 or idx == total_targets - 1):
+            if progress_callback and (idx % 3 == 0 or idx == total_targets - 1):
                 mapped_pct = int(50 + ((idx + 1) / total_targets) * 15)
                 progress_callback(f"Analyzing visual scenes: {idx + 1} / {total_targets} frames", mapped_pct)
 
