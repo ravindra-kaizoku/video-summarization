@@ -36,6 +36,7 @@ const TABS = [
   { label: 'YouTube Video', icon: <YoutubeIcon size={18} /> },
   { label: 'Upload Video', icon: <Film size={18} /> },
   { label: 'Upload Audio', icon: <Music size={18} /> },
+  { label: 'Paste Transcript', icon: <FileText size={18} /> },
   { label: 'Direct Link', icon: <ExternalLink size={18} /> },
 ];
 
@@ -64,6 +65,7 @@ const TEMPLATES = [
 
 const MORE_TOOLS = [
   { id: 'youtube', label: 'YouTube Video Summarizer', icon: <YoutubeIcon size={22} color="#ef4444" /> },
+  { id: 'transcript', label: 'Paste Transcript & Notes', icon: <FileText size={22} color="#10b981" /> },
   { id: 'audio', label: 'AI Audio Summarizer', icon: <Music size={22} color="#a855f7" /> },
   { id: 'video', label: 'Video to Text Converter', icon: <Film size={22} color="#3b82f6" /> },
 ];
@@ -83,6 +85,8 @@ function App() {
 
   const [file, setFile] = useState(null);
   const [videoUrlInput, setVideoUrlInput] = useState('');
+  const [transcriptInput, setTranscriptInput] = useState('');
+  const [transcriptTitle, setTranscriptTitle] = useState('');
   const [youtubeId, setYoutubeId] = useState(null);
   const [videoPreview, setVideoPreview] = useState(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -244,6 +248,30 @@ function App() {
     }
   };
 
+  const handleTranscriptSubmit = async () => {
+    if (!transcriptInput.trim()) return;
+    setErrorMessage(null);
+    setResult(null);
+    setIsProcessing(true);
+    setStatus('processing');
+    setProgress(10);
+    setStatusMessage('Analyzing and chunking transcript...');
+
+    try {
+      const resp = await axios.post(`${API_BASE_URL}/process-transcript`, {
+        text: transcriptInput.trim(),
+        title: transcriptTitle.trim() || 'Pasted Video Transcript'
+      });
+      setTaskId(resp.data.task_id);
+    } catch (err) {
+      console.error('Transcript process error:', err);
+      const msg = err.response?.data?.detail || 'Failed to start transcript processing.';
+      setErrorMessage(msg);
+      setStatusMessage('Failed to process transcript.');
+      setIsProcessing(false);
+    }
+  };
+
   const startSummarization = async () => {
     if (isUploading) {
       setStatusMessage('Please wait for the file upload to complete before starting summarization.');
@@ -299,7 +327,7 @@ function App() {
           } else if (resp.data.status === 'failed') {
             setIsProcessing(false);
             clearInterval(interval);
-            setErrorMessage(resp.data.error || 'Video processing failed.');
+            setErrorMessage(resp.data.message || resp.data.error || 'Video processing failed.');
           }
         } catch (err) {
           console.error('Status poll error:', err);
@@ -385,6 +413,8 @@ ${(result.important_sections || []).map(s => `### ${s.title} (${s.start} - ${s.e
     setIsProcessing(false);
     setProgress(0);
     setStatusMessage('');
+    setTranscriptInput('');
+    setTranscriptTitle('');
     setErrorMessage(null);
   };
 
@@ -392,6 +422,8 @@ ${(result.important_sections || []).map(s => `### ${s.title} (${s.start} - ${s.e
     if (toolId === 'youtube') {
       setActiveTab('YouTube Video');
       if (urlInputRef.current) urlInputRef.current.focus();
+    } else if (toolId === 'transcript') {
+      setActiveTab('Paste Transcript');
     } else if (toolId === 'audio') {
       setActiveTab('Upload Audio');
     } else {
@@ -461,6 +493,24 @@ ${(result.important_sections || []).map(s => `### ${s.title} (${s.start} - ${s.e
             <AlertCircle size={20} />
             <div style={{ flex: 1 }}>
               <strong>Processing Issue:</strong> {errorMessage}
+              {(typeof errorMessage === 'string' && (errorMessage.toLowerCase().includes('blocking') || errorMessage.toLowerCase().includes('cloud') || errorMessage.toLowerCase().includes('transcript') || errorMessage.toLowerCase().includes('restrict'))) ? (
+                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    className="btn-retry"
+                    style={{ background: '#3b82f6', color: 'white', borderColor: '#3b82f6', fontWeight: 'bold' }}
+                    onClick={() => { setActiveTab('Paste Transcript'); setErrorMessage(null); }}
+                  >
+                    📝 Switch to Paste Transcript Tab
+                  </button>
+                  <button
+                    className="btn-retry"
+                    style={{ background: '#10b981', color: 'white', borderColor: '#10b981', fontWeight: 'bold' }}
+                    onClick={() => { setActiveTab('Upload Video'); setErrorMessage(null); }}
+                  >
+                    📁 Switch to Upload Video File
+                  </button>
+                </div>
+              ) : null}
             </div>
             <button className="btn-retry" onClick={handleReset}>
               <RefreshCw size={14} /> Try Again
@@ -678,6 +728,61 @@ ${(result.important_sections || []).map(s => `### ${s.title} (${s.start} - ${s.e
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              
+              {/* PASTE TRANSCRIPT TAB */}
+              {activeTab === 'Paste Transcript' && (
+                <div className="youtube-tab-content">
+                  <div className="yt-badge-row">
+                    <span className="yt-badge">
+                      <FileText size={16} /> Instant Transcript Summarizer
+                    </span>
+                    <span className="yt-pill">⚡ 100% Cloud-Proof (No YouTube IP Blocks)</span>
+                  </div>
+
+                  <h2 className="upload-heading">Paste Video Transcript or Spoken Notes</h2>
+                  <p className="upload-subtext">
+                    Paste YouTube captions, meeting transcripts, or lecture notes. Our AI generates an executive summary, distinct key takeaways, and timestamped chapter breakdown instantly without any cloud IP blocks.
+                  </p>
+
+                  <div style={{ margin: '18px 0' }}>
+                    <input
+                      type="text"
+                      className="url-input yt-input"
+                      style={{ marginBottom: '12px', width: '100%', boxSizing: 'border-box' }}
+                      placeholder="Title or Topic (e.g. Will Harlow - 8 Strategies for Back Pain)"
+                      value={transcriptTitle}
+                      onChange={(e) => setTranscriptTitle(e.target.value)}
+                    />
+                    <textarea
+                      className="url-input yt-input"
+                      style={{
+                        minHeight: '180px',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        resize: 'vertical',
+                        fontFamily: 'inherit',
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        padding: '12px 16px',
+                        borderRadius: '10px'
+                      }}
+                      placeholder="Paste your transcript or subtitles here... (e.g. from YouTube 'Show transcript' or meeting notes)"
+                      value={transcriptInput}
+                      onChange={(e) => setTranscriptInput(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    className="btn-upload yt-submit-btn"
+                    disabled={!transcriptInput.trim() || isProcessing}
+                    onClick={handleTranscriptSubmit}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    <Sparkles size={18} /> Generate Executive Summary & Key Takeaways
+                  </button>
                 </div>
               )}
 

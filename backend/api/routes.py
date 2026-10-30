@@ -4,9 +4,11 @@ import re
 import uuid
 import traceback
 import gc
+from typing import Optional
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from pydantic import BaseModel
+import requests
 import yt_dlp
 
 from backend.utils.ffmpeg_utils import get_ffmpeg_cmd
@@ -89,34 +91,177 @@ def ensure_cookie_file():
     return None
 
 
+def parse_vtt(vtt_text: str) -> list:
+    """Parse WebVTT or SRT subtitle strings into [{'start': float, 'end': float, 'text': str}]."""
+    cue_pattern = re.compile(
+        r'(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{3})'
+    )
+    lines = vtt_text.splitlines()
+    segments = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        m = cue_pattern.search(line)
+        if m:
+            h1, m1, s1, ms1, h2, m2, s2, ms2 = m.groups()
+            start = (int(h1) * 3600 if h1 else 0) + int(m1) * 60 + int(s1) + int(ms1) / 1000.0
+            end = (int(h2) * 3600 if h2 else 0) + int(m2) * 60 + int(s2) + int(ms2) / 1000.0
+            i += 1
+            text_lines = []
+            while i < len(lines) and lines[i].strip() and not cue_pattern.search(lines[i]):
+                clean_line = re.sub(r'<[^>]+>', '', lines[i].strip())
+                if clean_line:
+                    text_lines.append(clean_line)
+                i += 1
+            text = " ".join(text_lines).strip()
+            if text:
+                segments.append({"start": round(start, 2), "end": round(end, 2), "text": text})
+        else:
+            i += 1
+    return segments
+
+
 def fetch_youtube_transcript(video_id: str) -> list:
     """
-    Fetch YouTube captions using youtube-transcript-api.
-    Returns transcript as a list of {'start': float, 'end': float, 'text': str} segments.
-    This bypasses YouTube's bot detection since it uses the caption API, not the video stream.
+    Fetch YouTube captions with multi-tier fallback:
+    1. youtube-transcript-api (with optional proxy via YOUTUBE_PROXY / HTTP_PROXY / HTTPS_PROXY)
+    2. Public Invidious API instances
+    3. Public Piped API instances
+    4. yt-dlp subtitle dump without video download
     """
+    proxy_url = os.environ.get("YOUTUBE_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+
+    # 1. Primary: youtube-transcript-api
     try:
         from youtube_transcript_api import YouTubeTranscriptApi
-        ytt_api = YouTubeTranscriptApi()
+        proxy_cfg = None
+        if proxy_url:
+            from youtube_transcript_api.proxies import GenericProxyConfig
+            proxy_cfg = GenericProxyConfig(http_url=proxy_url, https_url=proxy_url)
+
+        ytt_api = YouTubeTranscriptApi(proxy_config=proxy_cfg)
         fetched = ytt_api.fetch(video_id)
-        
-        transcript_segments = []
+        segments = []
         for snippet in fetched:
             start = float(snippet.start)
             duration = float(snippet.duration)
             text = str(snippet.text).strip()
             if text:
-                transcript_segments.append({
+                segments.append({
                     "start": round(start, 2),
                     "end": round(start + duration, 2),
                     "text": text
                 })
-        
-        print(f"[TRANSCRIPT-API] Fetched {len(transcript_segments)} caption segments for {video_id}")
-        return transcript_segments
+        if segments:
+            print(f"[TRANSCRIPT-API] Fetched {len(segments)} caption segments for {video_id}")
+            return segments
     except Exception as e:
-        print(f"[TRANSCRIPT-API] Failed to fetch transcript for {video_id}: {e}")
-        raise
+        print(f"[TRANSCRIPT-API] youtube-transcript-api failed for {video_id}: {e}")
+
+    # 2. Secondary: Public Invidious instances
+    invidious_mirrors = [
+        "https://inv.nadeko.net",
+        "https://invidious.nerdvpn.de",
+        "https://yewtu.be",
+        "https://iv.ggtyler.dev",
+        "https://invidious.jing.rocks",
+        "https://vid.puffyan.us"
+    ]
+    for mirror in invidious_mirrors:
+        try:
+            r = requests.get(f"{mirror}/api/v1/captions/{video_id}", timeout=4, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code == 200:
+                data = r.json()
+                captions = data.get("captions", [])
+                chosen = None
+                for c in captions:
+                    code = str(c.get("languageCode", "")).lower()
+                    label = str(c.get("label", "")).lower()
+                    if code.startswith("en") or "english" in label:
+                        chosen = c
+                        break
+                if not chosen and captions:
+                    chosen = captions[0]
+                if chosen and chosen.get("url"):
+                    c_url = chosen["url"]
+                    if not c_url.startswith("http"):
+                        c_url = f"{mirror}{c_url}"
+                    sub_r = requests.get(c_url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+                    if sub_r.status_code == 200 and sub_r.text:
+                        parsed = parse_vtt(sub_r.text)
+                        if parsed:
+                            print(f"[INVIDIOUS-API] Fetched {len(parsed)} caption cues from {mirror}")
+                            return parsed
+        except Exception as inv_err:
+            continue
+
+    # 3. Tertiary: Public Piped instances
+    piped_mirrors = [
+        "https://pipedapi.kavin.rocks",
+        "https://api.piped.privacydev.net",
+        "https://pipedapi.tokhmi.xyz"
+    ]
+    for p_mirror in piped_mirrors:
+        try:
+            r = requests.get(f"{p_mirror}/streams/{video_id}", timeout=4, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code == 200:
+                p_data = r.json()
+                subs = p_data.get("subtitles", [])
+                chosen = None
+                for s in subs:
+                    if str(s.get("code", "")).startswith("en") or "english" in str(s.get("name", "")).lower():
+                        chosen = s
+                        break
+                if not chosen and subs:
+                    chosen = subs[0]
+                if chosen and chosen.get("url"):
+                    sub_r = requests.get(chosen["url"], timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+                    if sub_r.status_code == 200 and sub_r.text:
+                        parsed = parse_vtt(sub_r.text)
+                        if parsed:
+                            print(f"[PIPED-API] Fetched {len(parsed)} cues from {p_mirror}")
+                            return parsed
+        except Exception as p_err:
+            continue
+
+    # 4. Quaternary: yt-dlp subtitle scraper without video download
+    try:
+        import yt_dlp
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            ydl_sub_opts = {
+                'skip_download': True,
+                'writesubtitles': True,
+                'writeautomaticsub': True,
+                'subtitleslangs': ['en', 'en-US', 'en-orig', '.*'],
+                'subtitlesformat': 'vtt',
+                'outtmpl': os.path.join(tmp_dir, '%(id)s.%(ext)s'),
+                'quiet': True,
+                'no_warnings': True,
+                'noplaylist': True,
+            }
+            if proxy_url:
+                ydl_sub_opts['proxy'] = proxy_url
+            cookie_path = ensure_cookie_file()
+            if cookie_path:
+                ydl_sub_opts['cookiefile'] = cookie_path
+            with yt_dlp.YoutubeDL(ydl_sub_opts) as ydl:
+                ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
+            for fname in os.listdir(tmp_dir):
+                if fname.endswith('.vtt'):
+                    with open(os.path.join(tmp_dir, fname), 'r', encoding='utf-8', errors='ignore') as f:
+                        parsed = parse_vtt(f.read())
+                        if parsed:
+                            print(f"[YTDLP-SUBS] Fetched {len(parsed)} cues from {fname}")
+                            return parsed
+    except Exception as yts_err:
+        pass
+
+    raise RuntimeError(
+        f"YouTube blocked datacenter caption requests for video {video_id}. "
+        "Please use the 'Paste Transcript' tab to summarize the transcript directly, "
+        "or upload the video/audio file in the 'Upload Video' tab!"
+    )
 
 
 def run_transcript_only_pipeline(task_id: str, video_id: str, transcript_segments: list, progress_callback):
@@ -349,12 +494,12 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
             except Exception as dl_err:
                 dl_msg = str(dl_err).lower()
                 # If YouTube blocks us (bot detection), fall back to transcript-only mode
-                if yt_id and ("bot" in dl_msg or "sign in" in dl_msg or "confirm" in dl_msg):
-                    print(f"[4-FALLBACK] YouTube download blocked. Switching to transcript-only mode.")
-                    progress_callback("YouTube blocked video download. Fetching captions instead...", 15)
+                if yt_id:
+                    print(f"[4-FALLBACK] YouTube video download restricted ({dl_err}). Switching to transcript-only mode.")
+                    progress_callback("YouTube blocked video stream. Fetching captions & transcripts...", 15)
                     use_transcript_fallback = True
                 else:
-                    raise  # Re-raise non-bot errors
+                    raise
 
         # -- Transcript-only path for blocked YouTube URLs --
         if use_transcript_fallback and yt_id:
@@ -415,9 +560,111 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
             )
 
         tasks_db[task_id]["status"] = "failed"
-        tasks_db[task_id]["error"] = err_msg
+        tasks_db[task_id]["error"] = user_facing_msg
+        tasks_db[task_id]["raw_error"] = err_msg
         tasks_db[task_id]["traceback"] = tb_str
         tasks_db[task_id]["message"] = user_facing_msg
+
+
+def parse_raw_text_to_segments(text: str) -> list:
+    """
+    Parses pasted text or transcripts (with or without timestamps) into list of
+    {"start": float, "end": float, "text": str}.
+    """
+    # 1. Check if it's VTT / SRT format
+    if "-->" in text:
+        vtt_segments = parse_vtt(text)
+        if vtt_segments:
+            return vtt_segments
+
+    # 2. Check for lines with leading timestamps: e.g. "01:23 Topic..." or "[00:45] Topic..."
+    ts_pattern = re.compile(r'^(?:\[|\()?(\d{1,2}:)?(\d{2}):(\d{2})(?:\]|\))?\s*[-:]?\s*(.+)$')
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    ts_segments = []
+    has_explicit_ts = False
+
+    for line in lines:
+        m = ts_pattern.match(line)
+        if m:
+            has_explicit_ts = True
+            h, m_val, s_val, content = m.groups()
+            sec = (int(h[:-1]) * 3600 if h else 0) + int(m_val) * 60 + int(s_val)
+            ts_segments.append({"start": float(sec), "text": content.strip()})
+
+    if has_explicit_ts and ts_segments:
+        for i in range(len(ts_segments)):
+            if i < len(ts_segments) - 1:
+                ts_segments[i]["end"] = ts_segments[i + 1]["start"]
+            else:
+                ts_segments[i]["end"] = ts_segments[i]["start"] + 30.0
+        return ts_segments
+
+    # 3. Plain prose / paragraphs: split into sentences and estimate timestamps (~150 wpm = 2.5 words/sec)
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if len(s.strip()) > 5]
+    if not sentences:
+        sentences = [text.strip()]
+
+    current_time = 0.0
+    segments = []
+    for s in sentences:
+        words = len(s.split())
+        duration = max(3.0, round(words / 2.5, 2))
+        segments.append({
+            "start": round(current_time, 2),
+            "end": round(current_time + duration, 2),
+            "text": s
+        })
+        current_time += duration
+
+    return segments
+
+
+class TranscriptProcessRequest(BaseModel):
+    text: str
+    title: Optional[str] = "Pasted Video Transcript"
+
+
+@router.post("/process-transcript")
+async def process_transcript_endpoint(req: TranscriptProcessRequest, background_tasks: BackgroundTasks):
+    if not req.text or not req.text.strip():
+        raise HTTPException(status_code=400, detail="Transcript text cannot be empty.")
+
+    task_id = str(uuid.uuid4())
+    title = req.title.strip() if req.title else "Pasted Video Transcript"
+
+    tasks_db[task_id] = {
+        "status": "processing",
+        "progress": 10,
+        "message": "Parsing transcript text...",
+        "title": title,
+        "video_url": "",
+        "filename": title,
+        "youtube_id": None
+    }
+
+    def run_transcript_task():
+        def progress_callback(stage: str, percentage: int):
+            tasks_db[task_id]["progress"] = percentage
+            tasks_db[task_id]["message"] = stage
+        try:
+            segments = parse_raw_text_to_segments(req.text)
+            if not segments:
+                raise RuntimeError("Could not extract any sentences or timestamps from the text.")
+            result = run_transcript_only_pipeline(task_id, "pasted_transcript", segments, progress_callback)
+            result["title"] = title
+            result["video_url"] = ""
+            results_db[task_id] = result
+            tasks_db[task_id]["status"] = "completed"
+            tasks_db[task_id]["progress"] = 100
+            tasks_db[task_id]["message"] = "Summarization completed successfully."
+        except Exception as e:
+            tasks_db[task_id]["status"] = "failed"
+            tasks_db[task_id]["error"] = str(e)
+            tasks_db[task_id]["message"] = f"Failed to process transcript: {str(e)}"
+
+    background_tasks.add_task(run_transcript_task)
+    return {"task_id": task_id, "title": title, "message": "Transcript processing started."}
+
 
 @router.post("/video-info")
 async def get_url_video_info(req: UrlProcessRequest):
