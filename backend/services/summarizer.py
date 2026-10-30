@@ -1,6 +1,5 @@
-import json
-import requests
 import re
+import requests
 from pathlib import Path
 from backend.utils.memory_utils import get_available_memory_mb
 
@@ -19,154 +18,167 @@ class HierarchicalSummarizer:
         if self.tokenizer is None or self.local_model is None:
             avail_mb = get_available_memory_mb()
             if avail_mb < 250:
-                print(f"[SUMMARIZER] Available RAM is {avail_mb:.1f} MB (< 250MB). Using smart extractive summarization.")
                 self.local_model = "lightweight"
                 return
 
             try:
                 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
                 model_name = "t5-small"
-                print(f"[SUMMARIZER] Loading text summarizer ({model_name}) [RAM: {avail_mb:.1f} MB]...")
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
                 self.local_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-            except Exception as e:
-                print(f"[SUMMARIZER] T5 load error: {e}. Using lightweight summarizer.")
+            except Exception:
                 self.local_model = "lightweight"
 
-    def _clean_summary(self, text: str) -> str:
-        text = text.strip()
-        if not text:
-            return ""
-        text = re.sub(r' - including the eu and afghanistan\..*', '.', text, flags=re.IGNORECASE)
-        text = re.sub(r'\s+[a-z]+:[.\s]*$', '.', text)
+    def _clean_transcript_sentences(self, transcript: str) -> list:
+        """Extracts clean, meaningful declarative sentences from the transcript, removing filler words."""
+        raw_sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', transcript) if len(s.strip()) > 8]
+        clean_sents = []
+        for s in raw_sents:
+            # Strip conversational fillers
+            s_clean = re.sub(r'^(Alright|So|Um|Uh|Well|You know|Like|Now|Okay)\s*,?\s*', '', s, flags=re.I)
+            s_clean = s_clean.strip()
+            if len(s_clean) > 12:
+                if not s_clean.endswith(('.', '!', '?')):
+                    s_clean += '.'
+                s_clean = s_clean[0].upper() + s_clean[1:]
+                clean_sents.append(s_clean)
+        return clean_sents
 
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', text) if s.strip()]
-        unique = []
-        for s in sentences:
-            if len(s) > 10 and s.lower() not in [u.lower() for u in unique]:
-                if s and not s.endswith(('.', '!', '?')):
-                    s += "."
-                s = s[0].upper() + s[1:]
-                unique.append(s)
-        return " ".join(unique)
+    def _derive_topic_keywords(self, transcript: str, max_words: int = 4) -> str:
+        """Extracts prominent descriptive topic keywords from the transcript."""
+        stop_words = {
+            'the', 'and', 'that', 'this', 'with', 'from', 'have', 'what', 'guys', 'about',
+            'they', 'here', 'there', 'really', 'cool', 'pretty', 'much', 'video', 'section',
+            'chapter', 'alright', 'just', 'some', 'like', 'then', 'also', 'will', 'been',
+            'would', 'could', 'their', 'which', 'when', 'more', 'other', 'into', 'only'
+        }
+        words = re.findall(r'\b[A-Za-z]{4,}\b', transcript)
+        meaningful = []
+        seen = set()
+        for w in words:
+            w_lower = w.lower()
+            if w_lower not in stop_words and w_lower not in seen:
+                seen.add(w_lower)
+                meaningful.append(w.capitalize())
+        if len(meaningful) >= 2:
+            return " ".join(meaningful[:max_words])
+        return "Key Highlights & Discussion"
 
     def generate_chunk_summary(self, chunk: dict) -> str:
+        """
+        Explains what happened in this video section up to that timestamp.
+        Synthesizes the actual spoken transcript into a concise narrative.
+        """
         start_min = int(chunk['start_time'] // 60)
         start_sec = int(chunk['start_time'] % 60)
         end_min = int(chunk['end_time'] // 60)
         end_sec = int(chunk['end_time'] % 60)
 
         transcript = chunk.get("transcript", "").strip()
-        if "[Video segment from" in transcript:
-            transcript = ""
+        time_label = f"{start_min:02d}:{start_sec:02d} - {end_min:02d}:{end_sec:02d}"
 
-        if not transcript or len(transcript.split()) < 5:
-            return f"This section ({start_min:02d}:{start_sec:02d}-{end_min:02d}:{end_sec:02d}) features key visual demonstrations and presentation topics."
-
+        # If LLM API is configured, use it
         if self.provider == "openai" and self.api_key:
-            prompt = f"Summarize this video segment ({start_min}:{start_sec:02d} to {end_min}:{end_sec:02d}) in 1-2 concise sentences:\n{transcript}"
+            prompt = f"Explain what happened in this video section ({time_label}) in 2-3 concise, informative sentences based on this transcript:\n{transcript}"
             res = self._call_openai(prompt)
             if res:
                 return res
 
-        # Abstractive local model if RAM allows
-        self._init_local_model()
-        if self.local_model != "lightweight" and self.local_model is not None and self.tokenizer is not None:
-            try:
-                words = transcript.split()
-                input_text = " ".join(words[:400])
-                prompt_text = f"summarize: {input_text}"
-                inputs = self.tokenizer(prompt_text, return_tensors="pt", max_length=512, truncation=True)
-                summary_ids = self.local_model.generate(
-                    inputs["input_ids"],
-                    max_length=60,
-                    min_length=15,
-                    num_beams=2,
-                    no_repeat_ngram_size=2,
-                    early_stopping=True
-                )
-                raw_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-                cleaned = self._clean_summary(raw_summary)
-                if len(cleaned.split()) >= 4:
-                    return cleaned
-            except Exception as e:
-                print(f"[SUMMARIZER] Local model generation error: {e}")
+        clean_sents = self._clean_transcript_sentences(transcript)
 
-        # Smart extractive summary
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?]) +', transcript) if len(s.strip()) > 15]
-        if sentences:
-            topic = sentences[0]
-            if len(topic) > 120:
-                topic = topic[:120] + "..."
-            return f"The section explores {topic.lower()}"
-        return f"This segment ({start_min:02d}:{start_sec:02d}-{end_min:02d}:{end_sec:02d}) outlines main concepts and key discussions."
+        if clean_sents:
+            # Pick top 2-3 most informative sentences
+            content_body = " ".join(clean_sents[:3])
+            return f"From {time_label}, {content_body}"
+
+        # Fallback if no speech recognized in this window
+        return f"This section ({time_label}) features key presentation content, visual demonstrations, and speaker commentary."
 
     def generate_final_summary(self, video_metadata: dict, selected_chunks: list, chunk_summaries: list) -> dict:
+        """
+        Builds:
+        1. Comprehensive Executive Video Summary explaining what happened across the video
+        2. Key Takeaways (4-8 distinct bullet points)
+        3. Timestamped Sections with clear topic titles and narrative summaries
+        """
         duration_mins = video_metadata.get("duration_minutes", 30)
-        combined_summaries = [s for s in chunk_summaries if s]
-        combined_text = " ".join(combined_summaries)
+        is_audio = video_metadata.get("is_audio_only", False)
+        media_type = "audio recording" if is_audio else "video"
+
+        # ── 1. Executive Summary ─────────────────────────────────────────────
+        # Aggregate all actual speech statements across selected chunks
+        all_sentences = []
+        for c in selected_chunks:
+            trans = c.get("transcript", "")
+            sents = self._clean_transcript_sentences(trans)
+            all_sentences.extend(sents)
 
         overall_summary = ""
         key_points = []
 
         if self.provider == "openai" and self.api_key:
-            prompt = f"Based on segment summaries of a {duration_mins:.1f}-minute video:\n{combined_text}\n\nProvide an overall concise summary, followed by 4-8 bullet points of key takeaways."
+            all_text = " ".join(all_sentences[:20])
+            prompt = f"Based on the transcript of this {duration_mins:.1f}-minute {media_type}, explain what happened across the video in a detailed summary paragraph, followed by 4-8 bullet points of key takeaways:\n{all_text}"
             res = self._call_openai(prompt)
-            if "Key takeaways:" in res:
-                parts = res.split("Key takeaways:")
+            if "Key takeaways:" in res or "Takeaways:" in res:
+                split_tag = "Key takeaways:" if "Key takeaways:" in res else "Takeaways:"
+                parts = res.split(split_tag)
                 overall_summary = parts[0].strip()
-                key_points = [p.strip("- *") for p in parts[1].strip().split("\n") if p.strip()]
+                key_points = [p.strip("- *0123456789.") for p in parts[1].strip().split("\n") if len(p.strip()) > 10]
             elif res:
                 overall_summary = res
 
         if not overall_summary:
-            self._init_local_model()
-            if self.local_model != "lightweight" and self.local_model is not None and self.tokenizer is not None:
-                try:
-                    prompt_text = f"summarize: {combined_text[:1500]}"
-                    inputs = self.tokenizer(prompt_text, return_tensors="pt", max_length=512, truncation=True)
-                    summary_ids = self.local_model.generate(
-                        inputs["input_ids"],
-                        max_length=120,
-                        min_length=40,
-                        num_beams=2,
-                        no_repeat_ngram_size=2,
-                        early_stopping=True
-                    )
-                    overall_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-                    overall_summary = self._clean_summary(overall_summary)
-                except Exception as e:
-                    print(f"[SUMMARIZER] Overall summary error: {e}")
+            if all_sentences:
+                # Build an informative multi-sentence narrative
+                lead = f"This {duration_mins:.1f}-minute {media_type} covers important themes and discussions across its timeline."
+                first_pts = all_sentences[:2]
+                mid_pts = [all_sentences[len(all_sentences) // 2]] if len(all_sentences) > 3 else []
+                conclusion_pts = [all_sentences[-1]] if len(all_sentences) > 2 else []
 
-        if not overall_summary:
-            if combined_summaries:
-                overall_summary = f"This {duration_mins:.1f}-minute video provides comprehensive coverage across key topics: " + " ".join(combined_summaries[:3])
+                narrative_body = " ".join(first_pts + mid_pts + conclusion_pts)
+                overall_summary = f"{lead} Throughout the session, {narrative_body}"
             else:
-                overall_summary = f"A detailed {duration_mins:.1f}-minute video presentation covering core concepts and visual demonstrations."
+                overall_summary = f"A comprehensive {duration_mins:.1f}-minute {media_type} presenting key discussions, concepts, and detailed audio-visual demonstrations across multiple chapters."
 
-        # Key points (4-8 takeaways)
+        # ── 2. Key Takeaways (4 to 8 distinct points) ─────────────────────────
         if not key_points:
             key_points = []
-            for s in combined_summaries:
-                s_clean = s.strip()
-                if len(s_clean) > 15:
-                    if not s_clean.endswith('.'):
-                        s_clean += '.'
-                    if s_clean not in key_points:
-                        key_points.append(s_clean)
+            seen_points = set()
 
+            # First, pull direct salient sentences from different chunks across the timeline
+            for chunk in selected_chunks:
+                trans = chunk.get("transcript", "")
+                sents = self._clean_transcript_sentences(trans)
+                for s in sents:
+                    s_lower = s.lower()
+                    if s_lower not in seen_points and len(s) > 20:
+                        seen_points.add(s_lower)
+                        key_points.append(s)
+                        break  # One key point per chunk for temporal diversity
+
+            # If still fewer than 4, pull additional unique sentences
             if len(key_points) < 4:
-                for chunk in selected_chunks:
-                    trans = chunk.get("transcript", "")
-                    sents = [st.strip() for st in re.split(r'(?<=[.!?]) +', trans) if len(st.strip()) > 25]
-                    for st in sents:
-                        if st not in key_points and len(key_points) < 8:
-                            key_points.append(st)
+                for s in all_sentences:
+                    s_lower = s.lower()
+                    if s_lower not in seen_points and len(s) > 20:
+                        seen_points.add(s_lower)
+                        key_points.append(s)
+                    if len(key_points) >= 6:
+                        break
+
+            # Limit to 8 points
             key_points = key_points[:8]
-            if len(key_points) < 4:
-                key_points.append("Comprehensive topic breakdown across the full video timeline.")
 
-        # Timestamped Sections
+            # Fallback if transcript was empty
+            if len(key_points) < 3:
+                key_points = [
+                    f"Comprehensive coverage of core presentation themes across the full {duration_mins:.1f}-minute duration.",
+                    "Sequential breakdown of key discussion topics and speaker commentary.",
+                    "Multimodal importance model identified significant discussion segments for quick review."
+                ]
+
+        # ── 3. Timestamped Sections with Informative Descriptions ─────────────
         important_sections = []
         for i, (chunk, summary) in enumerate(zip(selected_chunks, chunk_summaries)):
             start_sec = chunk["start_time"]
@@ -176,11 +188,9 @@ class HierarchicalSummarizer:
             start_fmt = f"{int(start_sec // 60):02d}:{int(start_sec % 60):02d}"
             end_fmt = f"{int(end_sec // 60):02d}:{int(end_sec % 60):02d}"
 
-            first_words = " ".join(summary.split()[:5]).strip(",.!?")
-            if first_words:
-                section_title = f"{start_fmt} - {end_fmt} | {first_words}..."
-            else:
-                section_title = f"Section {i+1}: {start_fmt} - {end_fmt}"
+            # Derive a descriptive title from the chunk's content
+            keywords = self._derive_topic_keywords(chunk.get("transcript", ""))
+            section_title = f"{start_fmt} - {end_fmt} | {keywords}"
 
             important_sections.append({
                 "start": start_fmt,
@@ -213,8 +223,8 @@ class HierarchicalSummarizer:
             resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=15)
             if resp.status_code == 200:
                 return resp.json()["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            print(f"OpenAI API call failed: {e}")
+        except Exception:
+            pass
         return ""
 
     def unload_model(self):
@@ -230,5 +240,3 @@ class HierarchicalSummarizer:
             except Exception:
                 pass
             self.tokenizer = None
-        import gc
-        gc.collect()
