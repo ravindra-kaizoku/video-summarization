@@ -1,10 +1,11 @@
-import cv2
 import os
 import json
+import subprocess
 from pathlib import Path
 from PIL import Image
 import numpy as np
 from backend.services.visual_features import VisualFeatureExtractor
+from backend.utils.ffmpeg_utils import get_ffmpeg_cmd, get_media_duration
 
 AUDIO_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma', '.opus', '.aiff', '.alac'}
 
@@ -39,65 +40,57 @@ class FrameProcessor:
 
         os.makedirs(frames_dir, exist_ok=True)
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            print(f"[FRAME] Note: Could not open as video stream ({video_path}). Processing as audio/text stream.")
-            return []
+        # Use fast FFmpeg keyframe seeking instead of slow OpenCV cap.set()
+        # OpenCV cap.set() decodes intermediate frames sequentially in CPU, taking 10-15 mins on long videos.
+        # FFmpeg keyframe seeking (-ss before -i) jumps directly to the nearest keyframe in 0.05 seconds!
+        dur = get_media_duration(video_path) or 60.0
+        num_frames = min(15, max(3, int(dur // 60))) if dur > 180 else min(10, max(2, int(dur // 15)))
+        timestamps = [round((i + 0.5) * (dur / num_frames), 2) for i in range(num_frames)]
+        if not timestamps:
+            timestamps = [1.0]
 
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        if fps <= 0:
-            fps = 30.0
-
-        total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        frame_step = int(fps * self.frame_interval)
-        if frame_step < 1:
-            frame_step = 30
-
-        target_indices = list(range(0, total_video_frames, frame_step))
-        if not target_indices:
-            target_indices = [0]
-
-        # Limit to max 15 representative keyframes to keep memory low on Render
-        max_frames = 15
-        if len(target_indices) > max_frames:
-            step = len(target_indices) / max_frames
-            target_indices = [target_indices[int(i * step)] for i in range(max_frames)]
-
-        total_targets = len(target_indices)
+        total_targets = len(timestamps)
         extracted_frames = []
+        ffmpeg_cmd = get_ffmpeg_cmd()
 
-        for idx, frame_idx in enumerate(target_indices):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-            ret, frame = cap.read()
-            if not ret or frame is None:
-                continue
+        print(f"[FRAME] Fast keyframe extraction starting for {total_targets} frames (duration: {dur:.1f}s)...")
 
-            timestamp = round(frame_idx / fps, 2)
-            frame_filename = f"frame_{timestamp:.1f}s.jpg"
+        for idx, ts in enumerate(timestamps):
+            frame_filename = f"frame_{ts:.1f}s.jpg"
             frame_path = os.path.join(frames_dir, frame_filename)
 
-            # Resize frame immediately to 224x224 to reduce memory usage by 97%
-            frame_small = cv2.resize(frame, (224, 224), interpolation=cv2.INTER_AREA)
-            cv2.imwrite(frame_path, frame_small)
+            # Fast keyframe extraction + immediate 224x224 downscaling in FFmpeg
+            cmd = [
+                ffmpeg_cmd, "-y",
+                "-ss", str(ts),
+                "-i", str(video_path),
+                "-vframes", "1",
+                "-vf", "scale=224:224",
+                "-q:v", "3",
+                str(frame_path)
+            ]
+            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            frame_rgb = cv2.cvtColor(frame_small, cv2.COLOR_BGR2RGB)
-            pil_img = Image.fromarray(frame_rgb)
+            if os.path.exists(frame_path) and os.path.getsize(frame_path) > 0:
+                try:
+                    pil_img = Image.open(frame_path).convert("RGB")
+                    features = self.feature_extractor.extract_features(pil_img)
+                    description = self.feature_extractor.generate_visual_description(pil_img)
 
-            features = self.feature_extractor.extract_features(pil_img)
-            description = self.feature_extractor.generate_visual_description(pil_img)
+                    extracted_frames.append({
+                        "timestamp": ts,
+                        "frame_path": frame_path,
+                        "description": description,
+                        "features": features.tolist() if hasattr(features, 'tolist') else list(features)
+                    })
+                except Exception as img_err:
+                    print(f"[FRAME] Warning analyzing frame at {ts}s: {img_err}")
 
-            extracted_frames.append({
-                "timestamp": timestamp,
-                "frame_path": frame_path,
-                "description": description,
-                "features": features.tolist() if hasattr(features, 'tolist') else list(features)
-            })
-
-            if progress_callback and (idx % 3 == 0 or idx == total_targets - 1):
+            if progress_callback:
                 mapped_pct = int(50 + ((idx + 1) / total_targets) * 15)
                 progress_callback(f"Analyzing visual scenes: {idx + 1} / {total_targets} frames", mapped_pct)
 
-        cap.release()
+        print(f"[FRAME] Fast extraction complete: extracted {len(extracted_frames)} frames in seconds!")
 
         Path(features_json_path).parent.mkdir(parents=True, exist_ok=True)
         with open(features_json_path, "w", encoding="utf-8") as f:

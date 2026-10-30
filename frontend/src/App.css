@@ -1021,11 +1021,38 @@ body {
   color: var(--blue-primary);
 }
 
+.video-player-container {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.video-element {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: 480px;
+  object-fit: contain;
+  display: block;
+  border-radius: 16px;
+  background: #000;
+}
+
 .yt-iframe-main {
   width: 100%;
+  max-width: 100%;
   height: 440px;
   border: none;
   display: block;
+  border-radius: 16px;
 }
 
 /* EXECUTIVE SUMMARY CARD */
