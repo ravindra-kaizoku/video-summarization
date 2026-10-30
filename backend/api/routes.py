@@ -6,7 +6,7 @@ import traceback
 import gc
 from typing import Optional
 from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import requests
 import yt_dlp
@@ -63,6 +63,60 @@ async def upload_video(file: UploadFile = File(...)):
         "video_url": f"/uploads/{save_path.name}",
         "message": "Upload complete"
     }
+
+@router.post("/upload-chunk")
+async def upload_chunk(
+    chunk: UploadFile = File(...),
+    task_id: str = Form(...),
+    chunk_index: int = Form(...),
+    total_chunks: int = Form(...),
+    filename: str = Form(...)
+):
+    """
+    Accepts sliced video/audio chunks (10MB each) to bypass Cloudflare and Render 100MB body limits.
+    Merges chunks seamlessly when the final chunk arrives.
+    """
+    if not filename:
+        raise HTTPException(status_code=400, detail="Filename must be provided")
+
+    file_ext = Path(filename).suffix or ".mp4"
+    part_path = UPLOAD_DIR / f"{task_id}.part"
+    save_path = UPLOAD_DIR / f"{task_id}{file_ext}"
+
+    mode = "wb" if chunk_index == 0 else "ab"
+    import shutil
+    with open(part_path, mode) as f:
+        shutil.copyfileobj(chunk.file, f)
+
+    if chunk_index == total_chunks - 1:
+        if save_path.exists():
+            save_path.unlink()
+        part_path.rename(save_path)
+
+        tasks_db[task_id] = {
+            "status": "uploaded",
+            "progress": 0,
+            "message": "File uploaded successfully.",
+            "file_path": str(save_path),
+            "filename": filename,
+            "video_url": f"/uploads/{save_path.name}"
+        }
+
+        return {
+            "status": "completed",
+            "task_id": task_id,
+            "filename": filename,
+            "video_url": f"/uploads/{save_path.name}",
+            "message": "Upload complete"
+        }
+
+    return {
+        "status": "chunk_received",
+        "task_id": task_id,
+        "chunk_index": chunk_index,
+        "total_chunks": total_chunks
+    }
+
 
 def extract_youtube_id(url: str):
     patterns = [

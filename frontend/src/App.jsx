@@ -162,45 +162,104 @@ function App() {
   const uploadVideoFile = async (fileToUpload) => {
     setIsUploading(true);
     setStatus('uploading');
-    setProgress(5);
-    setStatusMessage('Uploading video file...');
+    setProgress(2);
+    setStatusMessage('Preparing upload...');
     setErrorMessage(null);
 
     const sizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(1);
-    const formData = new FormData();
-    formData.append('file', fileToUpload);
-    try {
-      const resp = await axios.post(`${API_BASE_URL}/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 180000,
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            const loadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
-            const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(1);
-            if (pct >= 100) {
-              setProgress(99);
-              setStatusMessage(`100% transferred (${totalMB} MB)! Server is saving file...`);
-            } else {
-              setProgress(Math.min(99, Math.max(5, pct)));
-              setStatusMessage(`Uploading: ${pct}% (${loadedMB} / ${totalMB} MB)...`);
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks (bypasses Cloudflare & Render 100MB body limits)
+
+    // Fast direct upload for small files (<= 15MB)
+    if (fileToUpload.size <= 15 * 1024 * 1024) {
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      try {
+        const resp = await axios.post(`${API_BASE_URL}/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 120000,
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              const loadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
+              const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(1);
+              if (pct >= 100) {
+                setProgress(99);
+                setStatusMessage(`Saving file on server (${totalMB} MB)...`);
+              } else {
+                setProgress(Math.min(99, Math.max(5, pct)));
+                setStatusMessage(`Uploading: ${pct}% (${loadedMB} / ${totalMB} MB)...`);
+              }
             }
           }
-        }
-      });
-      setTaskId(resp.data.task_id);
-      setVideoUrl(`${BACKEND_URL}${resp.data.video_url}`);
-      setStatus('uploaded');
-      setProgress(100);
-      setStatusMessage('Upload complete! Click "Start Summarizing" below.');
-    } catch (err) {
-      console.error('Upload error:', err);
-      let msg = err.response?.data?.detail || err.message || 'Upload failed.';
-      if (err.code === 'ECONNABORTED' || msg.includes('timeout')) {
-        msg = `Upload timed out after 3 minutes. The file (${sizeMB} MB) is too large for the free cloud tier.`;
+        });
+        setTaskId(resp.data.task_id);
+        setVideoUrl(`${BACKEND_URL}${resp.data.video_url}`);
+        setStatus('uploaded');
+        setProgress(100);
+        setStatusMessage('Upload complete! Click "Start Summarizing" below.');
+      } catch (err) {
+        console.error('Upload error:', err);
+        const msg = err.response?.data?.detail || err.message || 'Upload failed.';
+        setStatusMessage(`Upload failed: ${msg}`);
+        setErrorMessage(`Upload failed: ${msg}`);
+      } finally {
+        setIsUploading(false);
       }
+      return;
+    }
+
+    // Chunked Upload for larger files (> 15MB, handles 100MB, 200MB, 500MB, 1GB+)
+    const totalChunks = Math.ceil(fileToUpload.size / CHUNK_SIZE);
+    const uploadTaskId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'task-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+
+    try {
+      let finalRespData = null;
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(fileToUpload.size, start + CHUNK_SIZE);
+        const chunkBlob = fileToUpload.slice(start, end);
+
+        const formData = new FormData();
+        formData.append('chunk', chunkBlob, fileToUpload.name);
+        formData.append('task_id', uploadTaskId);
+        formData.append('chunk_index', i);
+        formData.append('total_chunks', totalChunks);
+        formData.append('filename', fileToUpload.name);
+
+        const resp = await axios.post(`${API_BASE_URL}/upload-chunk`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 180000,
+          onUploadProgress: (progressEvent) => {
+            const chunkLoaded = progressEvent.loaded || 0;
+            const currentTotalLoaded = start + chunkLoaded;
+            const overallPct = Math.min(99, Math.max(3, Math.round((currentTotalLoaded / fileToUpload.size) * 100)));
+            const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1);
+            setProgress(overallPct);
+            setStatusMessage(`Uploading: ${overallPct}% (${loadedMB} / ${sizeMB} MB) • Chunk ${i + 1}/${totalChunks}...`);
+          }
+        });
+
+        if (i === totalChunks - 1) {
+          finalRespData = resp.data;
+        }
+      }
+
+      if (finalRespData && finalRespData.task_id) {
+        setTaskId(finalRespData.task_id);
+        if (finalRespData.video_url) {
+          setVideoUrl(`${BACKEND_URL}${finalRespData.video_url}`);
+        }
+        setStatus('uploaded');
+        setProgress(100);
+        setStatusMessage(`Upload complete (${sizeMB} MB)! Click "Start Summarizing" below.`);
+      }
+    } catch (err) {
+      console.error('Chunk upload error:', err);
+      const msg = err.response?.data?.detail || err.message || 'Chunk upload failed.';
       setStatusMessage(`Upload failed: ${msg}`);
-      setErrorMessage(`Upload failed: ${msg}. For free cloud hosting, files under 100MB work best. Alternatively, use a YouTube link.`);
+      setErrorMessage(`Upload failed: ${msg}. Please check your connection and try again.`);
     } finally {
       setIsUploading(false);
     }
