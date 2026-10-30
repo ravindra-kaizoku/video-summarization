@@ -74,6 +74,19 @@ def extract_youtube_id(url: str):
             return m.group(1)
     return None
 
+def ensure_cookie_file():
+    cookie_file = os.environ.get("YOUTUBE_COOKIEFILE", "cookies.txt")
+    cookies_content = os.environ.get("YOUTUBE_COOKIES_CONTENT")
+    if cookies_content and not os.path.exists(cookie_file):
+        try:
+            with open(cookie_file, "w", encoding="utf-8") as f:
+                f.write(cookies_content)
+        except Exception as e:
+            print(f"Warning writing cookie file: {e}")
+    if os.path.exists(cookie_file):
+        return cookie_file
+    return None
+
 def get_video_info(url: str):
     """Fast extraction of video title, duration, thumbnail, and channel without downloading."""
     ydl_opts = {
@@ -88,9 +101,9 @@ def get_video_info(url: str):
             }
         }
     }
-    cookie_file = os.environ.get("YOUTUBE_COOKIEFILE", "cookies.txt")
-    if os.path.exists(cookie_file):
-        ydl_opts['cookiefile'] = cookie_file
+    cookie_path = ensure_cookie_file()
+    if cookie_path:
+        ydl_opts['cookiefile'] = cookie_path
 
     yt_id = extract_youtube_id(url)
     default_thumb = f"https://img.youtube.com/vi/{yt_id}/hqdefault.jpg" if yt_id else ""
@@ -155,9 +168,9 @@ def download_video_url(url: str, output_path: str, progress_callback=None):
             }
         }
     }
-    cookie_file = os.environ.get("YOUTUBE_COOKIEFILE", "cookies.txt")
-    if os.path.exists(cookie_file):
-        ydl_opts['cookiefile'] = cookie_file
+    cookie_path = ensure_cookie_file()
+    if cookie_path:
+        ydl_opts['cookiefile'] = cookie_path
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -228,10 +241,17 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
         print(f"==================================================================\n", file=sys.stderr)
         sys.stderr.flush()
 
+        user_facing_msg = f"Error: {err_msg}"
+        if "confirm you’re not a bot" in err_msg.lower() or "confirm you're not a bot" in err_msg.lower():
+            user_facing_msg = (
+                "YouTube has restricted direct cloud streaming on Render's datacenter IP. "
+                "Please download the video or upload your local video file using the 'Upload Video' tab for seamless summarization!"
+            )
+
         tasks_db[task_id]["status"] = "failed"
         tasks_db[task_id]["error"] = err_msg
         tasks_db[task_id]["traceback"] = tb_str
-        tasks_db[task_id]["message"] = f"Error: {err_msg}"
+        tasks_db[task_id]["message"] = user_facing_msg
 
 @router.post("/video-info")
 async def get_url_video_info(req: UrlProcessRequest):
