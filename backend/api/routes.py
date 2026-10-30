@@ -41,9 +41,9 @@ async def upload_video(file: UploadFile = File(...)):
     file_ext = Path(file.filename).suffix or ".mp4"
     save_path = UPLOAD_DIR / f"{task_id}{file_ext}"
 
-    with open(save_path, "wb") as f:
-        content = await file.read()
-        f.write(content)
+    import shutil
+    with open(save_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
     tasks_db[task_id] = {
         "status": "uploaded",
@@ -83,10 +83,15 @@ def get_video_info(url: str):
         'noplaylist': True,
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web']
+                'player_client': ['android', 'ios'],
+                'player_skip': ['webpage', 'configs']
             }
         }
     }
+    cookie_file = os.environ.get("YOUTUBE_COOKIEFILE", "cookies.txt")
+    if os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
+
     yt_id = extract_youtube_id(url)
     default_thumb = f"https://img.youtube.com/vi/{yt_id}/hqdefault.jpg" if yt_id else ""
     try:
@@ -127,15 +132,15 @@ def download_video_url(url: str, output_path: str, progress_callback=None):
             speed_mb = speed / (1024 * 1024) if speed else 0
             if total > 0:
                 pct = int((downloaded / total) * 100)
-                msg = f"Downloading YouTube stream: {pct}% ({speed_mb:.1f} MB/s)"
+                msg = f"Downloading stream: {pct}% ({speed_mb:.1f} MB/s)"
                 mapped_prog = int(10 + (pct * 0.15))
                 progress_callback(msg, mapped_prog)
             else:
                 progress_callback("Downloading video stream...", 15)
 
     ydl_opts = {
-        # Fast 480p/720p mp4 stream selection for rapid download & full compatibility
-        'format': 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=480]/best[height<=720]/best',
+        # Format 18 is pre-muxed 360p mp4 available directly from the Android/iOS client without bot block
+        'format': '18/best[height<=480][ext=mp4]/best[ext=mp4]/best',
         'outtmpl': base_stem + '.%(ext)s',
         'merge_output_format': 'mp4',
         'ffmpeg_location': ffmpeg_exe,
@@ -145,10 +150,14 @@ def download_video_url(url: str, output_path: str, progress_callback=None):
         'progress_hooks': [yt_hook],
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'web']
+                'player_client': ['android', 'ios'],
+                'player_skip': ['webpage', 'configs']
             }
         }
     }
+    cookie_file = os.environ.get("YOUTUBE_COOKIEFILE", "cookies.txt")
+    if os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)

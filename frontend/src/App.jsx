@@ -158,23 +158,34 @@ function App() {
   const uploadVideoFile = async (fileToUpload) => {
     setIsUploading(true);
     setStatus('uploading');
-    setProgress(15);
+    setProgress(5);
     setStatusMessage('Uploading video file...');
+    setErrorMessage(null);
     const formData = new FormData();
     formData.append('file', fileToUpload);
     try {
       const resp = await axios.post(`${API_BASE_URL}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setProgress(Math.min(99, Math.max(1, pct)));
+            const loadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
+            const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(1);
+            setStatusMessage(`Uploading video: ${pct}% (${loadedMB} / ${totalMB} MB)...`);
+          }
+        }
       });
       setTaskId(resp.data.task_id);
       setVideoUrl(`${BACKEND_URL}${resp.data.video_url}`);
       setStatus('uploaded');
       setProgress(100);
-      setStatusMessage('Video uploaded successfully. Ready to summarize.');
+      setStatusMessage('Upload complete! Click "Start Summarizing" below.');
     } catch (err) {
       console.error('Upload error:', err);
-      setStatusMessage('Upload failed. Please try again.');
-      setErrorMessage('Failed to upload video file.');
+      const msg = err.response?.data?.detail || err.message || 'Upload failed.';
+      setStatusMessage(`Upload failed: ${msg}`);
+      setErrorMessage(`Upload failed: ${msg}. If your file is very large, try a smaller clip (<100MB) or use a YouTube link for instant processing.`);
     } finally {
       setIsUploading(false);
     }
@@ -223,7 +234,15 @@ function App() {
   };
 
   const startSummarization = async () => {
-    if (!taskId) return;
+    if (isUploading) {
+      setStatusMessage('Please wait for the file upload to complete before starting summarization.');
+      return;
+    }
+    if (!taskId) {
+      setErrorMessage('No uploaded video found. Please re-select your file or check upload status.');
+      return;
+    }
+    setErrorMessage(null);
     setIsProcessing(true);
     setStatus('processing');
     setProgress(5);
@@ -232,8 +251,9 @@ function App() {
       await axios.post(`${API_BASE_URL}/process/${taskId}`);
     } catch (err) {
       console.error('Process start error:', err);
+      const msg = err.response?.data?.detail || 'Failed to start processing pipeline.';
       setStatusMessage('Failed to start processing.');
-      setErrorMessage('Failed to start processing pipeline.');
+      setErrorMessage(msg);
       setIsProcessing(false);
     }
   };
@@ -241,10 +261,12 @@ function App() {
   // Polling task status
   useEffect(() => {
     let interval = null;
+    let failCount = 0;
     if (isProcessing && taskId) {
       interval = setInterval(async () => {
         try {
           const resp = await axios.get(`${API_BASE_URL}/status/${taskId}`);
+          failCount = 0;
           setProgress(resp.data.progress || 0);
           setStatusMessage(resp.data.message || 'Processing video...');
           
@@ -270,6 +292,12 @@ function App() {
           }
         } catch (err) {
           console.error('Status poll error:', err);
+          failCount += 1;
+          if (failCount >= 8) {
+            setIsProcessing(false);
+            clearInterval(interval);
+            setErrorMessage('Lost connection to server. The server may have restarted due to memory limits. Try a shorter video or YouTube link.');
+          }
         }
       }, 1500);
     }
@@ -537,11 +565,39 @@ ${(result.important_sections || []).map(s => `### ${s.title} (${s.start} - ${s.e
                     </button>
                   </div>
 
+                  {isUploading && (
+                    <div className="progress-card" style={{ marginTop: '1.25rem' }}>
+                      <div className="progress-track">
+                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
+                      <div className="progress-info">
+                        <span>{statusMessage}</span>
+                        <span className="prog-pct">{progress}%</span>
+                      </div>
+                    </div>
+                  )}
+
                   {file && (
-                    <div className="file-selected-badge">
-                      <Film size={16} /> Selected: <strong>{file.name}</strong> ({Math.round(file.size / 1024 / 1024)} MB)
-                      <button className="btn-upload" style={{ marginLeft: '1rem', padding: '0.5rem 1rem' }} onClick={startSummarization}>
-                        Start Summarizing
+                    <div className="file-selected-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Film size={16} />
+                        <span>Selected: <strong>{file.name}</strong> ({Math.round(file.size / 1024 / 1024)} MB)</span>
+                      </div>
+                      <button 
+                        className="btn-upload" 
+                        style={{ padding: '0.5rem 1.25rem', opacity: (isUploading || !taskId) ? 0.6 : 1 }} 
+                        onClick={startSummarization}
+                        disabled={isUploading || !taskId || isProcessing}
+                      >
+                        {isUploading ? (
+                          <>
+                            <RefreshCw size={14} className="spin-icon" /> Uploading ({progress}%)...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={16} /> Start Summarizing
+                          </>
+                        )}
                       </button>
                     </div>
                   )}
@@ -575,11 +631,39 @@ ${(result.important_sections || []).map(s => `### ${s.title} (${s.start} - ${s.e
                     </button>
                   </div>
 
+                  {isUploading && (
+                    <div className="progress-card" style={{ marginTop: '1.25rem' }}>
+                      <div className="progress-track">
+                        <div className="progress-fill" style={{ width: `${progress}%` }} />
+                      </div>
+                      <div className="progress-info">
+                        <span>{statusMessage}</span>
+                        <span className="prog-pct">{progress}%</span>
+                      </div>
+                    </div>
+                  )}
+
                   {file && (
-                    <div className="file-selected-badge">
-                      <Music size={16} /> Selected: <strong>{file.name}</strong>
-                      <button className="btn-upload" style={{ marginLeft: '1rem', padding: '0.5rem 1rem' }} onClick={startSummarization}>
-                        Start Summarizing
+                    <div className="file-selected-badge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginTop: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Music size={16} />
+                        <span>Selected: <strong>{file.name}</strong></span>
+                      </div>
+                      <button 
+                        className="btn-upload" 
+                        style={{ padding: '0.5rem 1.25rem', opacity: (isUploading || !taskId) ? 0.6 : 1 }} 
+                        onClick={startSummarization}
+                        disabled={isUploading || !taskId || isProcessing}
+                      >
+                        {isUploading ? (
+                          <>
+                            <RefreshCw size={14} className="spin-icon" /> Uploading ({progress}%)...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={16} /> Start Summarizing
+                          </>
+                        )}
                       </button>
                     </div>
                   )}
