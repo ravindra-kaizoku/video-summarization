@@ -161,18 +161,26 @@ function App() {
     setProgress(5);
     setStatusMessage('Uploading video file...');
     setErrorMessage(null);
+
+    const sizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(1);
     const formData = new FormData();
     formData.append('file', fileToUpload);
     try {
       const resp = await axios.post(`${API_BASE_URL}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 180000,
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
             const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setProgress(Math.min(99, Math.max(1, pct)));
             const loadedMB = (progressEvent.loaded / (1024 * 1024)).toFixed(1);
             const totalMB = (progressEvent.total / (1024 * 1024)).toFixed(1);
-            setStatusMessage(`Uploading video: ${pct}% (${loadedMB} / ${totalMB} MB)...`);
+            if (pct >= 100) {
+              setProgress(99);
+              setStatusMessage(`100% transferred (${totalMB} MB)! Server is saving file...`);
+            } else {
+              setProgress(Math.min(99, Math.max(5, pct)));
+              setStatusMessage(`Uploading: ${pct}% (${loadedMB} / ${totalMB} MB)...`);
+            }
           }
         }
       });
@@ -183,9 +191,12 @@ function App() {
       setStatusMessage('Upload complete! Click "Start Summarizing" below.');
     } catch (err) {
       console.error('Upload error:', err);
-      const msg = err.response?.data?.detail || err.message || 'Upload failed.';
+      let msg = err.response?.data?.detail || err.message || 'Upload failed.';
+      if (err.code === 'ECONNABORTED' || msg.includes('timeout')) {
+        msg = `Upload timed out after 3 minutes. The file (${sizeMB} MB) is too large for the free cloud tier.`;
+      }
       setStatusMessage(`Upload failed: ${msg}`);
-      setErrorMessage(`Upload failed: ${msg}. If your file is very large, try a smaller clip (<100MB) or use a YouTube link for instant processing.`);
+      setErrorMessage(`Upload failed: ${msg}. For free cloud hosting, files under 100MB work best. Alternatively, use a YouTube link.`);
     } finally {
       setIsUploading(false);
     }

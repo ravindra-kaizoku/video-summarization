@@ -9,6 +9,6 @@ echo "==> Installing CPU-only PyTorch (reduces memory from 3GB to ~180MB)..."
 pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 echo "==> Installing remaining dependencies..."
-pip install -r requirements.txt
+pip install --no-cache-dir -r requirements.txt
 
 echo "==> Build finished successfully!"
