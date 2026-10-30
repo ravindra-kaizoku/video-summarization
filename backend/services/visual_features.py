@@ -61,7 +61,7 @@ class VisualFeatureExtractor:
 
         # 3. Grayscale luminance spatial variance (224 features)
         gray = 0.299 * arr[:, :, 0] + 0.587 * arr[:, :, 1] + 0.114 * arr[:, :, 2]
-        var_blocks = gray.reshape(16, 4, 14, 4).var(axis=(1, 3)).flatten()
+        var_blocks = gray.reshape(16, 4, 16, 4).var(axis=(1, 3)).flatten()
 
         combined = np.concatenate([blocks, hists, var_blocks])  # total: 192 + 96 + 224 = 512
         if len(combined) < 512:
