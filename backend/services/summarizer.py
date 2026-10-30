@@ -1,3 +1,4 @@
+import os
 import re
 import requests
 from pathlib import Path
@@ -7,37 +8,84 @@ class HierarchicalSummarizer:
     def __init__(self, config: dict):
         self.config = config
         llm_cfg = config.get("llm", {})
-        self.provider = llm_cfg.get("provider", "mock_api")
-        self.api_key = llm_cfg.get("api_key", "")
-        self.model_name = llm_cfg.get("model_name", "gpt-3.5-turbo")
-        self.temperature = llm_cfg.get("temperature", 0.3)
+        self.provider = os.environ.get("LLM_PROVIDER") or llm_cfg.get("provider", "mock_api")
+        self.api_key = (
+            os.environ.get("GROQ_API_KEY") or
+            os.environ.get("GEMINI_API_KEY") or
+            os.environ.get("OPENAI_API_KEY") or
+            llm_cfg.get("api_key", "")
+        )
         self.tokenizer = None
         self.local_model = None
 
-    def _init_local_model(self):
-        if self.tokenizer is None or self.local_model is None:
-            avail_mb = get_available_memory_mb()
-            if avail_mb < 250:
-                self.local_model = "lightweight"
-                return
-
+    def _call_llm(self, prompt: str) -> str:
+        """Calls Groq, Gemini, or OpenAI API if any key is provided in the environment."""
+        # 1. Groq API (free, ultra-fast Llama-3.3-70B)
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if groq_key:
             try:
-                from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-                model_name = "t5-small"
-                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-                self.local_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-            except Exception:
-                self.local_model = "lightweight"
+                url = "https://api.groq.com/openai/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3
+                }
+                r = requests.post(url, headers=headers, json=payload, timeout=20)
+                if r.status_code == 200:
+                    return r.json()["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                print(f"[LLM] Groq error: {e}")
+
+        # 2. Gemini API
+        gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if gemini_key:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+                headers = {"Content-Type": "application/json"}
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"temperature": 0.3, "maxOutputTokens": 1000}
+                }
+                r = requests.post(url, headers=headers, json=payload, timeout=20)
+                if r.status_code == 200:
+                    return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+            except Exception as e:
+                print(f"[LLM] Gemini error: {e}")
+
+        # 3. OpenAI API
+        openai_key = os.environ.get("OPENAI_API_KEY") or (self.api_key if self.provider == "openai" else "")
+        if openai_key:
+            try:
+                url = "https://api.openai.com/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3
+                }
+                r = requests.post(url, headers=headers, json=payload, timeout=20)
+                if r.status_code == 200:
+                    return r.json()["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                print(f"[LLM] OpenAI error: {e}")
+
+        return ""
 
     def _clean_transcript_sentences(self, transcript: str) -> list:
-        """Extracts clean, meaningful declarative sentences from the transcript, removing filler words."""
+        """Extracts clean, meaningful declarative sentences from the transcript, removing conversational fillers."""
         raw_sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', transcript) if len(s.strip()) > 8]
         clean_sents = []
+        # Filter greetings and channel boilerplate
+        boilerplate = {'welcome back', 'subscribe to', 'hit the bell', 'thanks for watching', 'leave a comment', 'see you in the next video'}
+
         for s in raw_sents:
+            s_lower = s.lower()
+            if any(b in s_lower for b in boilerplate):
+                continue
             # Strip conversational fillers
-            s_clean = re.sub(r'^(Alright|So|Um|Uh|Well|You know|Like|Now|Okay)\s*,?\s*', '', s, flags=re.I)
-            s_clean = s_clean.strip()
-            if len(s_clean) > 12:
+            s_clean = re.sub(r'^(Alright|So|Um|Uh|Well|You know|Like|Now|Okay)\s*,?\s*', '', s, flags=re.I).strip()
+            if len(s_clean) > 15:
                 if not s_clean.endswith(('.', '!', '?')):
                     s_clean += '.'
                 s_clean = s_clean[0].upper() + s_clean[1:]
@@ -50,7 +98,8 @@ class HierarchicalSummarizer:
             'the', 'and', 'that', 'this', 'with', 'from', 'have', 'what', 'guys', 'about',
             'they', 'here', 'there', 'really', 'cool', 'pretty', 'much', 'video', 'section',
             'chapter', 'alright', 'just', 'some', 'like', 'then', 'also', 'will', 'been',
-            'would', 'could', 'their', 'which', 'when', 'more', 'other', 'into', 'only'
+            'would', 'could', 'their', 'which', 'when', 'more', 'other', 'into', 'only',
+            'going', 'said', 'were', 'does', 'don\'t', 'doesn\'t'
         }
         words = re.findall(r'\b[A-Za-z]{4,}\b', transcript)
         meaningful = []
@@ -65,10 +114,7 @@ class HierarchicalSummarizer:
         return "Key Highlights & Discussion"
 
     def generate_chunk_summary(self, chunk: dict) -> str:
-        """
-        Explains what happened in this video section up to that timestamp.
-        Synthesizes the actual spoken transcript into a concise narrative.
-        """
+        """Explains what happened in this video section up to that timestamp."""
         start_min = int(chunk['start_time'] // 60)
         start_sec = int(chunk['start_time'] % 60)
         end_min = int(chunk['end_time'] // 60)
@@ -77,36 +123,34 @@ class HierarchicalSummarizer:
         transcript = chunk.get("transcript", "").strip()
         time_label = f"{start_min:02d}:{start_sec:02d} - {end_min:02d}:{end_sec:02d}"
 
-        # If LLM API is configured, use it
-        if self.provider == "openai" and self.api_key:
-            prompt = f"Explain what happened in this video section ({time_label}) in 2-3 concise, informative sentences based on this transcript:\n{transcript}"
-            res = self._call_openai(prompt)
-            if res:
-                return res
+        # If LLM API is available, ask LLM
+        prompt = (
+            f"Explain clearly what happens in this video section ({time_label}) in 2-3 concise, "
+            f"informative sentences based on this spoken transcript:\n{transcript}"
+        )
+        llm_res = self._call_llm(prompt)
+        if llm_res:
+            return llm_res
 
         clean_sents = self._clean_transcript_sentences(transcript)
-
         if clean_sents:
-            # Pick top 2-3 most informative sentences
             content_body = " ".join(clean_sents[:3])
             return f"From {time_label}, {content_body}"
 
-        # Fallback if no speech recognized in this window
-        return f"This section ({time_label}) features key presentation content, visual demonstrations, and speaker commentary."
+        return f"This section ({time_label}) covers key presentation content, visual demonstrations, and speaker commentary."
 
     def generate_final_summary(self, video_metadata: dict, selected_chunks: list, chunk_summaries: list) -> dict:
         """
         Builds:
-        1. Comprehensive Executive Video Summary explaining what happened across the video
-        2. Key Takeaways (4-8 distinct bullet points)
-        3. Timestamped Sections with clear topic titles and narrative summaries
+        1. Executive Video Summary: explains what happened across the video
+        2. Key Takeaways: distinct key points from different parts of the video
+        3. Timestamped Chapters: what happened up to each timestamp
         """
         duration_mins = video_metadata.get("duration_minutes", 30)
         is_audio = video_metadata.get("is_audio_only", False)
         media_type = "audio recording" if is_audio else "video"
 
-        # ── 1. Executive Summary ─────────────────────────────────────────────
-        # Aggregate all actual speech statements across selected chunks
+        # Combine transcripts
         all_sentences = []
         for c in selected_chunks:
             trans = c.get("transcript", "")
@@ -116,61 +160,69 @@ class HierarchicalSummarizer:
         overall_summary = ""
         key_points = []
 
-        if self.provider == "openai" and self.api_key:
-            all_text = " ".join(all_sentences[:20])
-            prompt = f"Based on the transcript of this {duration_mins:.1f}-minute {media_type}, explain what happened across the video in a detailed summary paragraph, followed by 4-8 bullet points of key takeaways:\n{all_text}"
-            res = self._call_openai(prompt)
-            if "Key takeaways:" in res or "Takeaways:" in res:
-                split_tag = "Key takeaways:" if "Key takeaways:" in res else "Takeaways:"
-                parts = res.split(split_tag)
-                overall_summary = parts[0].strip()
-                key_points = [p.strip("- *0123456789.") for p in parts[1].strip().split("\n") if len(p.strip()) > 10]
-            elif res:
-                overall_summary = res
+        # Try LLM first if API key configured
+        full_text = " ".join(all_sentences[:30])
+        if full_text:
+            prompt = (
+                f"You are an expert video summarizer. Based on the following spoken transcript of a "
+                f"{duration_mins:.1f}-minute {media_type}, provide:\n"
+                f"1. A comprehensive summary paragraph explaining who is speaking, what the video discusses, "
+                f"and how the topic develops across the video.\n"
+                f"2. A numbered list of 4 to 8 distinct Key Takeaways covering different facts and advice.\n\n"
+                f"Format strictly as:\n"
+                f"Summary:\n[Summary paragraph]\n\n"
+                f"Key Takeaways:\n1. [Point 1]\n2. [Point 2]...\n\n"
+                f"Transcript:\n{full_text}"
+            )
+            llm_res = self._call_llm(prompt)
+            if llm_res:
+                if "Key Takeaways:" in llm_res or "Takeaways:" in llm_res:
+                    tag = "Key Takeaways:" if "Key Takeaways:" in llm_res else "Takeaways:"
+                    parts = llm_res.split(tag)
+                    sum_part = parts[0].replace("Summary:", "").strip()
+                    if len(sum_part) > 30:
+                        overall_summary = sum_part
+                    pts = [re.sub(r'^\d+\.\s*', '', p.strip('- *')).strip() for p in parts[1].strip().split("\n") if len(p.strip()) > 15]
+                    if len(pts) >= 3:
+                        key_points = pts[:8]
 
+        # Built-in Extractive Synthesis if LLM not active
         if not overall_summary:
             if all_sentences:
-                # Build an informative multi-sentence narrative
-                lead = f"This {duration_mins:.1f}-minute {media_type} covers important themes and discussions across its timeline."
+                lead = f"This {duration_mins:.1f}-minute {media_type} covers key insights, arguments, and practical guidance across its timeline."
                 first_pts = all_sentences[:2]
                 mid_pts = [all_sentences[len(all_sentences) // 2]] if len(all_sentences) > 3 else []
                 conclusion_pts = [all_sentences[-1]] if len(all_sentences) > 2 else []
-
                 narrative_body = " ".join(first_pts + mid_pts + conclusion_pts)
-                overall_summary = f"{lead} Throughout the session, {narrative_body}"
+                overall_summary = f"{lead} The discussion highlights: {narrative_body}"
             else:
-                overall_summary = f"A comprehensive {duration_mins:.1f}-minute {media_type} presenting key discussions, concepts, and detailed audio-visual demonstrations across multiple chapters."
+                overall_summary = f"A comprehensive {duration_mins:.1f}-minute {media_type} presenting core concepts, practical guidance, and detailed demonstrations across multiple chapters."
 
-        # ── 2. Key Takeaways (4 to 8 distinct points) ─────────────────────────
+        # Key Takeaways: ensure distinct points from across the timeline
         if not key_points:
             key_points = []
             seen_points = set()
 
-            # First, pull direct salient sentences from different chunks across the timeline
             for chunk in selected_chunks:
                 trans = chunk.get("transcript", "")
                 sents = self._clean_transcript_sentences(trans)
                 for s in sents:
                     s_lower = s.lower()
-                    if s_lower not in seen_points and len(s) > 20:
+                    if s_lower not in seen_points and len(s) > 25:
                         seen_points.add(s_lower)
                         key_points.append(s)
-                        break  # One key point per chunk for temporal diversity
+                        break  # One distinct point per chunk
 
-            # If still fewer than 4, pull additional unique sentences
             if len(key_points) < 4:
                 for s in all_sentences:
                     s_lower = s.lower()
-                    if s_lower not in seen_points and len(s) > 20:
+                    if s_lower not in seen_points and len(s) > 25:
                         seen_points.add(s_lower)
                         key_points.append(s)
                     if len(key_points) >= 6:
                         break
 
-            # Limit to 8 points
             key_points = key_points[:8]
-
-            # Fallback if transcript was empty
             if len(key_points) < 3:
                 key_points = [
                     f"Comprehensive coverage of core presentation themes across the full {duration_mins:.1f}-minute duration.",
@@ -178,7 +230,7 @@ class HierarchicalSummarizer:
                     "Multimodal importance model identified significant discussion segments for quick review."
                 ]
 
-        # ── 3. Timestamped Sections with Informative Descriptions ─────────────
+        # Timestamped Sections (Chapters)
         important_sections = []
         for i, (chunk, summary) in enumerate(zip(selected_chunks, chunk_summaries)):
             start_sec = chunk["start_time"]
@@ -188,7 +240,6 @@ class HierarchicalSummarizer:
             start_fmt = f"{int(start_sec // 60):02d}:{int(start_sec % 60):02d}"
             end_fmt = f"{int(end_sec // 60):02d}:{int(end_sec % 60):02d}"
 
-            # Derive a descriptive title from the chunk's content
             keywords = self._derive_topic_keywords(chunk.get("transcript", ""))
             section_title = f"{start_fmt} - {end_fmt} | {keywords}"
 
@@ -209,34 +260,5 @@ class HierarchicalSummarizer:
             "important_sections": important_sections
         }
 
-    def _call_openai(self, prompt: str) -> str:
-        try:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "model": self.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": self.temperature
-            }
-            resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=15)
-            if resp.status_code == 200:
-                return resp.json()["choices"][0]["message"]["content"].strip()
-        except Exception:
-            pass
-        return ""
-
     def unload_model(self):
-        if self.local_model is not None and self.local_model != "lightweight":
-            try:
-                del self.local_model
-            except Exception:
-                pass
-            self.local_model = None
-        if self.tokenizer is not None:
-            try:
-                del self.tokenizer
-            except Exception:
-                pass
-            self.tokenizer = None
+        pass
