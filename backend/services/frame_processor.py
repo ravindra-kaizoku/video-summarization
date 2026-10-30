@@ -6,6 +6,8 @@ from PIL import Image
 import numpy as np
 from backend.services.visual_features import VisualFeatureExtractor
 
+AUDIO_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma', '.opus', '.aiff', '.alac'}
+
 class FrameProcessor:
     def __init__(self, config: dict):
         self.config = config
@@ -19,6 +21,15 @@ class FrameProcessor:
 
     def process_video_frames(self, video_path: str, cache_dir: str = "cache", progress_callback=None) -> list:
         video_name = Path(video_path).stem
+        ext = Path(video_path).suffix.lower()
+
+        # If it's an audio recording, skip frame extraction gracefully
+        if ext in AUDIO_EXTENSIONS:
+            print(f"[FRAME] Audio file detected ({ext}). Skipping visual frame extraction.")
+            if progress_callback:
+                progress_callback("Audio file detected — processing acoustic stream...", 60)
+            return []
+
         frames_dir = os.path.join(cache_dir, "frames", video_name)
         features_json_path = os.path.join(cache_dir, "visual_features", f"{video_name}.json")
 
@@ -30,7 +41,8 @@ class FrameProcessor:
 
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
-            raise RuntimeError(f"Could not open video file: {video_path}")
+            print(f"[FRAME] Note: Could not open as video stream ({video_path}). Processing as audio/text stream.")
+            return []
 
         fps = cap.get(cv2.CAP_PROP_FPS)
         if fps <= 0:
