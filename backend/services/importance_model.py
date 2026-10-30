@@ -154,3 +154,19 @@ class VideoImportanceService:
                   f"score={c['importance_score']:.2f}")
 
         return scored_chunks, selected_chunks
+
+    def unload_model(self):
+        if self.text_embedder is not None:
+            try:
+                del self.text_embedder
+            except Exception:
+                pass
+            self.text_embedder = None
+        if self.model is not None:
+            try:
+                del self.model
+            except Exception:
+                pass
+            self.model = None
+        import gc
+        gc.collect()

@@ -23,6 +23,16 @@ class WhisperService:
                 print(f"Faster-Whisper load error: {e}. Falling back to standard whisper / mock transcript if offline.")
                 self.model = "fallback"
 
+    def unload_model(self):
+        if self.model is not None and self.model != "fallback":
+            try:
+                del self.model
+            except Exception:
+                pass
+            self.model = None
+            import gc
+            gc.collect()
+
     def transcribe(self, audio_wav_path: str, cache_json_path: str = None, progress_callback=None, total_duration: float = None) -> list:
         if cache_json_path and os.path.exists(cache_json_path):
             with open(cache_json_path, "r", encoding="utf-8") as f:

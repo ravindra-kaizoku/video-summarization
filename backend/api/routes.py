@@ -3,6 +3,7 @@ import sys
 import re
 import uuid
 import traceback
+import gc
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from pydantic import BaseModel
@@ -86,6 +87,135 @@ def ensure_cookie_file():
     if os.path.exists(cookie_file):
         return cookie_file
     return None
+
+
+def fetch_youtube_transcript(video_id: str) -> list:
+    """
+    Fetch YouTube captions using youtube-transcript-api.
+    Returns transcript as a list of {'start': float, 'end': float, 'text': str} segments.
+    This bypasses YouTube's bot detection since it uses the caption API, not the video stream.
+    """
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi
+        ytt_api = YouTubeTranscriptApi()
+        fetched = ytt_api.fetch(video_id)
+        
+        transcript_segments = []
+        for snippet in fetched:
+            start = float(snippet.start)
+            duration = float(snippet.duration)
+            text = str(snippet.text).strip()
+            if text:
+                transcript_segments.append({
+                    "start": round(start, 2),
+                    "end": round(start + duration, 2),
+                    "text": text
+                })
+        
+        print(f"[TRANSCRIPT-API] Fetched {len(transcript_segments)} caption segments for {video_id}")
+        return transcript_segments
+    except Exception as e:
+        print(f"[TRANSCRIPT-API] Failed to fetch transcript for {video_id}: {e}")
+        raise
+
+
+def run_transcript_only_pipeline(task_id: str, video_id: str, transcript_segments: list, progress_callback):
+    """
+    Text-only summarization pipeline for YouTube videos when video download is blocked.
+    Uses captions from youtube-transcript-api instead of downloading the video file.
+    Skips audio extraction, whisper, and frame extraction — goes straight to 
+    temporal alignment (with zero visual features), importance scoring, and T5 summarization.
+    """
+    import numpy as np
+
+    progress_callback("Building text-only segments from YouTube captions...", 30)
+
+    if not transcript_segments:
+        raise RuntimeError("No transcript/captions available for this YouTube video.")
+
+    # Calculate total duration from transcript timestamps
+    total_duration = max(seg["end"] for seg in transcript_segments) if transcript_segments else 60.0
+    duration_minutes = total_duration / 60.0
+
+    # Create video metadata (no actual video file)
+    metadata = {
+        "duration_seconds": total_duration,
+        "duration_minutes": round(duration_minutes, 1),
+        "fps": 0,
+        "width": 0,
+        "height": 0,
+        "total_frames": 0,
+        "source": "youtube_transcript_api"
+    }
+
+    # Temporal alignment: chunk transcript into time windows (no visual features)
+    progress_callback("Aligning transcript into temporal chunks...", 40)
+    
+    pipeline_instance = get_pipeline()
+    chunk_duration = pipeline_instance.config.get("system", {}).get("chunk_duration_seconds", 180)
+    num_chunks = max(1, int(np.ceil(total_duration / chunk_duration)))
+    
+    chunks = []
+    for i in range(num_chunks):
+        start_time = i * chunk_duration
+        end_time = min(total_duration, (i + 1) * chunk_duration)
+        
+        # Filter transcript segments within this chunk
+        chunk_texts = [
+            seg["text"] for seg in transcript_segments
+            if seg["start"] < end_time and seg["end"] >= start_time
+        ]
+        chunk_transcript = " ".join(chunk_texts).strip()
+        if not chunk_transcript:
+            chunk_transcript = f"Caption segment from {int(start_time//60):02d}:{int(start_time%60):02d} to {int(end_time//60):02d}:{int(end_time%60):02d}."
+        
+        chunks.append({
+            "chunk_id": i + 1,
+            "start_time": round(start_time, 2),
+            "end_time": round(end_time, 2),
+            "transcript": chunk_transcript,
+            "visual_information": ["No video frames available (transcript-only mode)."],
+            "visual_features": [0.0] * 512,
+            "frame_count": 0
+        })
+    
+    print(f"[TRANSCRIPT-PIPELINE] Created {len(chunks)} text-only chunks from {len(transcript_segments)} caption segments")
+
+    # Importance scoring (text features only, visual features zeroed)
+    progress_callback("Scoring segment importance using AI model...", 60)
+    top_k = pipeline_instance.config.get("model", {}).get("top_k_chunks", 15)
+    scored_chunks, selected_chunks = pipeline_instance.importance_service.score_chunks(chunks, top_k=top_k)
+    print(f"[TRANSCRIPT-PIPELINE] Selected {len(selected_chunks)} important chunks")
+
+    # Unload importance model to free RAM for summarizer
+    pipeline_instance.importance_service.unload_model()
+    gc.collect()
+
+    # Summarization
+    total_sel = len(selected_chunks)
+    chunk_summaries = []
+    for i, c in enumerate(selected_chunks):
+        pct = int(75 + ((i + 1) / max(1, total_sel)) * 20)
+        progress_callback(f"Summarizing chapter {i + 1} of {total_sel}...", pct)
+        chunk_summaries.append(pipeline_instance.summarizer.generate_chunk_summary(c))
+
+    progress_callback("Finalizing executive summary...", 98)
+    final_output = pipeline_instance.summarizer.generate_final_summary(
+        video_metadata=metadata,
+        selected_chunks=selected_chunks,
+        chunk_summaries=chunk_summaries
+    )
+
+    # Unload summarizer to free RAM
+    pipeline_instance.summarizer.unload_model()
+    gc.collect()
+
+    final_output["metadata"] = metadata
+    final_output["total_chunks_processed"] = len(chunks)
+    final_output["selected_chunks_count"] = len(selected_chunks)
+    final_output["source_mode"] = "transcript_only"
+
+    return final_output
 
 def get_video_info(url: str):
     """Fast extraction of video title, duration, thumbnail, and channel without downloading."""
@@ -202,17 +332,52 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
 
     try:
         video_title = None
+        yt_id = tasks_db[task_id].get("youtube_id")
+        use_transcript_fallback = False
+
         if url and not os.path.exists(file_path):
             print(f"[3] Video download started for URL: {url}")
             progress_callback("Connecting to YouTube video stream...", 10)
-            info = download_video_url(url, file_path, progress_callback=progress_callback)
-            if info:
-                video_title = info.get("title")
-                tasks_db[task_id]["title"] = video_title
-                tasks_db[task_id]["thumbnail"] = info.get("thumbnail")
-                tasks_db[task_id]["duration"] = info.get("duration")
-            print(f"[4] Video download completed. Saved to: {file_path}")
+            try:
+                info = download_video_url(url, file_path, progress_callback=progress_callback)
+                if info:
+                    video_title = info.get("title")
+                    tasks_db[task_id]["title"] = video_title
+                    tasks_db[task_id]["thumbnail"] = info.get("thumbnail")
+                    tasks_db[task_id]["duration"] = info.get("duration")
+                print(f"[4] Video download completed. Saved to: {file_path}")
+            except Exception as dl_err:
+                dl_msg = str(dl_err).lower()
+                # If YouTube blocks us (bot detection), fall back to transcript-only mode
+                if yt_id and ("bot" in dl_msg or "sign in" in dl_msg or "confirm" in dl_msg):
+                    print(f"[4-FALLBACK] YouTube download blocked. Switching to transcript-only mode.")
+                    progress_callback("YouTube blocked video download. Fetching captions instead...", 15)
+                    use_transcript_fallback = True
+                else:
+                    raise  # Re-raise non-bot errors
 
+        # -- Transcript-only path for blocked YouTube URLs --
+        if use_transcript_fallback and yt_id:
+            progress_callback("Fetching YouTube captions via transcript API...", 20)
+            transcript_segments = fetch_youtube_transcript(yt_id)
+            result = run_transcript_only_pipeline(task_id, yt_id, transcript_segments, progress_callback)
+
+            result["video_url"] = tasks_db[task_id].get("video_url", "")
+            if video_title:
+                result["title"] = video_title
+            result["youtube_id"] = yt_id
+            if tasks_db[task_id].get("thumbnail"):
+                result["thumbnail"] = tasks_db[task_id]["thumbnail"]
+
+            results_db[task_id] = result
+            tasks_db[task_id]["status"] = "completed"
+            tasks_db[task_id]["progress"] = 100
+            tasks_db[task_id]["message"] = "Summarization completed successfully (transcript-only mode)."
+            print(f"[13] Summary generated via transcript-only fallback for Task ID: {task_id}")
+            sys.stdout.flush()
+            return
+
+        # -- Standard full video pipeline (local uploads or successful YouTube downloads) --
         pipeline_instance = get_pipeline()
         result = pipeline_instance.process_long_video(file_path, progress_callback=progress_callback)
         result["video_url"] = tasks_db[task_id]["video_url"]
@@ -222,9 +387,9 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
             result["youtube_id"] = tasks_db[task_id]["youtube_id"]
         if tasks_db[task_id].get("thumbnail"):
             result["thumbnail"] = tasks_db[task_id]["thumbnail"]
-            
+
         results_db[task_id] = result
-        
+
         tasks_db[task_id]["status"] = "completed"
         tasks_db[task_id]["progress"] = 100
         tasks_db[task_id]["message"] = "Summarization completed successfully."
@@ -242,10 +407,11 @@ def run_pipeline_task(task_id: str, file_path: str, url: str = None):
         sys.stderr.flush()
 
         user_facing_msg = f"Error: {err_msg}"
-        if "confirm you’re not a bot" in err_msg.lower() or "confirm you're not a bot" in err_msg.lower():
+        if "bot" in err_msg.lower() or "sign in" in err_msg.lower():
             user_facing_msg = (
-                "YouTube has restricted direct cloud streaming on Render's datacenter IP. "
-                "Please download the video or upload your local video file using the 'Upload Video' tab for seamless summarization!"
+                "YouTube blocked this video download. "
+                "The transcript-based fallback also failed. "
+                "Please upload your local video file using the Upload Video tab."
             )
 
         tasks_db[task_id]["status"] = "failed"

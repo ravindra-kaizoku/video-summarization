@@ -42,6 +42,18 @@ class VisualFeatureExtractor:
         
         return embedding.squeeze(0).cpu().numpy()
 
+    def unload_model(self):
+        if self.model is not None:
+            try:
+                del self.model
+                del self.transform
+            except Exception:
+                pass
+            self.model = None
+            self.transform = None
+            import gc
+            gc.collect()
+
     def generate_visual_description(self, frame_img) -> str:
         """Generates a concise visual summary description of the sampled frame."""
         # Lightweight scene change / keyframe description generator

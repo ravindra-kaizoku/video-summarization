@@ -1,5 +1,6 @@
 import os
 import sys
+import gc
 from pathlib import Path
 from backend.services.video_processor import VideoProcessor
 from backend.services.audio_processor import AudioProcessor
@@ -51,6 +52,11 @@ class VideoSummarizationPipeline:
         )
         print(f"[11] Audio processing and transcription completed. Sentences count: {len(transcript)}")
 
+        # -- Unload Whisper model after transcription to free ~40 MB RAM --
+        self.audio_processor.whisper_service.unload_model()
+        gc.collect()
+        print("[MEM] Unloaded Whisper model")
+
         # 4. Frame Sampling & Visual Feature Extraction
         print(f"[7] Video feature extraction started")
         notify("Sampling video frames and analyzing visual scenes...", 50)
@@ -58,6 +64,11 @@ class VideoSummarizationPipeline:
             video_path,
             progress_callback=notify
         )
+
+        # -- Unload ResNet-18 after frame processing to free ~50 MB RAM --
+        self.frame_processor.unload_model()
+        gc.collect()
+        print("[MEM] Unloaded ResNet-18 visual feature model")
 
         # 5. Multimodal Temporal Alignment into chunks
         notify("Performing multimodal temporal alignment", 65)
@@ -74,6 +85,11 @@ class VideoSummarizationPipeline:
         scored_chunks, selected_chunks = self.importance_service.score_chunks(chunks, top_k=top_k)
         print(f"[9] Importance prediction completed. Selected {len(selected_chunks)} chunks.")
 
+        # -- Unload SentenceTransformer + BiLSTM to free ~140 MB RAM --
+        self.importance_service.unload_model()
+        gc.collect()
+        print("[MEM] Unloaded importance scoring models")
+
         # 7. Hierarchical LLM Summarization with progressive updates
         print(f"[12] Text summarization started")
         total_sel = len(selected_chunks)
@@ -89,6 +105,11 @@ class VideoSummarizationPipeline:
             selected_chunks=selected_chunks,
             chunk_summaries=chunk_summaries
         )
+
+        # -- Unload T5 summarizer to free ~60 MB RAM --
+        self.summarizer.unload_model()
+        gc.collect()
+        print("[MEM] Unloaded T5 summarizer model")
 
         # Attach execution details
         final_output["metadata"] = metadata

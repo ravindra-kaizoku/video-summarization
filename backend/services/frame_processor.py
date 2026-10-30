@@ -45,6 +45,11 @@ class FrameProcessor:
         if not target_indices:
             target_indices = [0]
             
+        max_frames = 25
+        if len(target_indices) > max_frames:
+            step = len(target_indices) / max_frames
+            target_indices = [target_indices[int(i * step)] for i in range(max_frames)]
+
         total_targets = len(target_indices)
         extracted_frames = []
 
@@ -85,3 +90,7 @@ class FrameProcessor:
             json.dump(extracted_frames, f, indent=2)
 
         return extracted_frames
+
+    def unload_model(self):
+        if hasattr(self, 'feature_extractor') and hasattr(self.feature_extractor, 'unload_model'):
+            self.feature_extractor.unload_model()

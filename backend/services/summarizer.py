@@ -231,3 +231,19 @@ class HierarchicalSummarizer:
         except Exception as e:
             print(f"OpenAI API call failed: {e}")
         return ""
+
+    def unload_model(self):
+        if self.local_model is not None:
+            try:
+                del self.local_model
+            except Exception:
+                pass
+            self.local_model = None
+        if self.tokenizer is not None:
+            try:
+                del self.tokenizer
+            except Exception:
+                pass
+            self.tokenizer = None
+        import gc
+        gc.collect()
