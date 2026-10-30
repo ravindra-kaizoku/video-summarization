@@ -80,18 +80,27 @@ async def upload_chunk(
         raise HTTPException(status_code=400, detail="Filename must be provided")
 
     file_ext = Path(filename).suffix or ".mp4"
-    part_path = UPLOAD_DIR / f"{task_id}.part"
+    chunk_path = UPLOAD_DIR / f"{task_id}_chunk_{chunk_index}.part"
     save_path = UPLOAD_DIR / f"{task_id}{file_ext}"
 
-    mode = "wb" if chunk_index == 0 else "ab"
     import shutil
-    with open(part_path, mode) as f:
+    with open(chunk_path, "wb") as f:
         shutil.copyfileobj(chunk.file, f)
 
-    if chunk_index == total_chunks - 1:
-        if save_path.exists():
-            save_path.unlink()
-        part_path.rename(save_path)
+    # Check how many chunks have arrived
+    existing_chunks = list(UPLOAD_DIR.glob(f"{task_id}_chunk_*.part"))
+    if len(existing_chunks) == total_chunks:
+        # All chunks arrived! Concatenate in numerical order 0..total_chunks-1
+        with open(save_path, "wb") as out_f:
+            for idx in range(total_chunks):
+                c_file = UPLOAD_DIR / f"{task_id}_chunk_{idx}.part"
+                if c_file.exists():
+                    with open(c_file, "rb") as in_f:
+                        shutil.copyfileobj(in_f, out_f)
+                    try:
+                        c_file.unlink()
+                    except Exception:
+                        pass
 
         tasks_db[task_id] = {
             "status": "uploaded",
@@ -114,7 +123,8 @@ async def upload_chunk(
         "status": "chunk_received",
         "task_id": task_id,
         "chunk_index": chunk_index,
-        "total_chunks": total_chunks
+        "total_chunks": total_chunks,
+        "chunks_received": len(existing_chunks)
     }
 
 

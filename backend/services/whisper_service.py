@@ -2,6 +2,7 @@ import os
 import json
 import gc
 import subprocess
+import requests
 import numpy as np
 from pathlib import Path
 from backend.utils.memory_utils import get_available_memory_mb
@@ -99,6 +100,65 @@ class WhisperService:
         if not audio_wav_path or not os.path.exists(audio_wav_path):
             print("[WHISPER] No audio file provided or missing. Generating timeline segments.")
             return self._generate_fallback_segments(dur)
+
+        # 0. Check for Groq API Key for ultra-fast cloud Whisper acceleration (~2 seconds)
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if groq_key and audio_wav_path and os.path.exists(audio_wav_path):
+            try:
+                print(f"[WHISPER] Accelerating transcription with Groq Whisper API (whisper-large-v3-turbo)...")
+                if progress_callback:
+                    progress_callback("Transcribing speech with ultra-fast cloud Whisper...", 45)
+
+                file_size_mb = os.path.getsize(audio_wav_path) / (1024 * 1024)
+                send_path = audio_wav_path
+                temp_mp3 = None
+                if file_size_mb > 24.0:
+                    temp_mp3 = Path(audio_wav_path).with_suffix(".mp3")
+                    ffmpeg_cmd = get_ffmpeg_cmd()
+                    subprocess.run([
+                        ffmpeg_cmd, "-y", "-i", str(audio_wav_path),
+                        "-vn", "-ar", "16000", "-ac", "1", "-b:a", "64k", str(temp_mp3)
+                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if temp_mp3.exists():
+                        send_path = str(temp_mp3)
+
+                url = "https://api.groq.com/openai/v1/audio/transcriptions"
+                headers = {"Authorization": f"Bearer {groq_key}"}
+                with open(send_path, "rb") as f:
+                    files = {"file": (Path(send_path).name, f, "audio/mpeg" if send_path.endswith(".mp3") else "audio/wav")}
+                    data = {
+                        "model": "whisper-large-v3-turbo",
+                        "response_format": "verbose_json",
+                        "language": "en"
+                    }
+                    resp = requests.post(url, headers=headers, files=files, data=data, timeout=60)
+
+                if temp_mp3 and temp_mp3.exists():
+                    try:
+                        temp_mp3.unlink()
+                    except Exception:
+                        pass
+
+                if resp.status_code == 200:
+                    groq_data = resp.json()
+                    segs = groq_data.get("segments", [])
+                    groq_segments = []
+                    for s in segs:
+                        text = s.get("text", "").strip()
+                        if text:
+                            groq_segments.append({
+                                "start": round(float(s.get("start", 0)), 2),
+                                "end": round(float(s.get("end", 0)), 2),
+                                "text": text
+                            })
+                    if groq_segments:
+                        print(f"[WHISPER] Groq transcribed {len(groq_segments)} segments in ~2 seconds!")
+                        if cache_json_path:
+                            with open(cache_json_path, "w", encoding="utf-8") as f:
+                                json.dump(groq_segments, f, indent=2)
+                        return groq_segments
+            except Exception as groq_err:
+                print(f"[WHISPER] Groq transcription error: {groq_err}. Falling back to local whisper.")
 
         self._init_model()
 

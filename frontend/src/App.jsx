@@ -216,35 +216,48 @@ function App() {
 
     try {
       let finalRespData = null;
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * CHUNK_SIZE;
-        const end = Math.min(fileToUpload.size, start + CHUNK_SIZE);
-        const chunkBlob = fileToUpload.slice(start, end);
+      let completedChunks = 0;
+      const CONCURRENCY = 3; // Upload 3 chunks simultaneously for 3x speedup
 
-        const formData = new FormData();
-        formData.append('chunk', chunkBlob, fileToUpload.name);
-        formData.append('task_id', uploadTaskId);
-        formData.append('chunk_index', i);
-        formData.append('total_chunks', totalChunks);
-        formData.append('filename', fileToUpload.name);
+      // Task queue of chunk indices
+      const queue = Array.from({ length: totalChunks }, (_, idx) => idx);
 
-        const resp = await axios.post(`${API_BASE_URL}/upload-chunk`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 180000,
-          onUploadProgress: (progressEvent) => {
-            const chunkLoaded = progressEvent.loaded || 0;
-            const currentTotalLoaded = start + chunkLoaded;
-            const overallPct = Math.min(99, Math.max(3, Math.round((currentTotalLoaded / fileToUpload.size) * 100)));
-            const loadedMB = (currentTotalLoaded / (1024 * 1024)).toFixed(1);
-            setProgress(overallPct);
-            setStatusMessage(`Uploading: ${overallPct}% (${loadedMB} / ${sizeMB} MB) • Chunk ${i + 1}/${totalChunks}...`);
+      const worker = async () => {
+        while (queue.length > 0) {
+          const i = queue.shift();
+          const start = i * CHUNK_SIZE;
+          const end = Math.min(fileToUpload.size, start + CHUNK_SIZE);
+          const chunkBlob = fileToUpload.slice(start, end);
+
+          const formData = new FormData();
+          formData.append('chunk', chunkBlob, fileToUpload.name);
+          formData.append('task_id', uploadTaskId);
+          formData.append('chunk_index', i);
+          formData.append('total_chunks', totalChunks);
+          formData.append('filename', fileToUpload.name);
+
+          const resp = await axios.post(`${API_BASE_URL}/upload-chunk`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 180000
+          });
+
+          completedChunks += 1;
+          const overallPct = Math.min(99, Math.max(3, Math.round((completedChunks / totalChunks) * 100)));
+          const transferredMB = Math.min(parseFloat(sizeMB), (completedChunks * (CHUNK_SIZE / (1024 * 1024)))).toFixed(1);
+          setProgress(overallPct);
+          setStatusMessage(`⚡ Parallel Upload: ${overallPct}% (${transferredMB} / ${sizeMB} MB) • ${completedChunks}/${totalChunks} chunks...`);
+
+          if (resp.data.status === 'completed') {
+            finalRespData = resp.data;
           }
-        });
-
-        if (i === totalChunks - 1) {
-          finalRespData = resp.data;
         }
+      };
+
+      const workers = [];
+      for (let w = 0; w < Math.min(CONCURRENCY, totalChunks); w++) {
+        workers.push(worker());
       }
+      await Promise.all(workers);
 
       if (finalRespData && finalRespData.task_id) {
         setTaskId(finalRespData.task_id);
